@@ -9,7 +9,7 @@ from tkinter import filedialog
 
 
 class TeleLookupApp:
-    def __init__(self, idle_timeout=300, chunk_size=1000000):
+    def __init__(self, idle_timeout=300, chunk_size=100000):
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
 
@@ -44,17 +44,16 @@ class TeleLookupApp:
             return None
 
     def matches(self, parsed, id_query, user_query, phone_query):
-        match = True
         if id_query and id_query not in parsed["id"]:
-            match = False
+            return False
         if user_query and user_query.lower() not in parsed["username"].lower():
-            match = False
+            return False
         if phone_query and phone_query not in parsed["phone"]:
-            match = False
-        return match
+            return False
+        return True
 
     # ---------- search ----------
-    def search_file_streaming(self, id_query="", user_query="", phone_query=""):
+    def search_file_streaming(self, id_query="", user_query="", phone_query="", results_placeholder=None):
         file_path = st.session_state.get("file_path", "")
         if not file_path or not os.path.exists(file_path):
             st.warning("No file loaded.")
@@ -67,7 +66,6 @@ class TeleLookupApp:
         progress_bar = st.progress(0)
         percent_text = st.empty()
         elapsed_text = st.empty()
-        results_placeholder = st.empty()
 
         # get total lines (approx)
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -84,12 +82,14 @@ class TeleLookupApp:
                         if parsed and self.matches(parsed, id_query, user_query, phone_query):
                             results_list.append(parsed)
                     chunk = []
-                    # update UI
+
+                    # update UI (live results)
                     percent = min(int(idx / total_lines * 100), 100)
                     percent_text.text(f"Progress: {percent}%")
                     elapsed_text.text(f"Elapsed time: {time.time()-start_time:.1f} sec")
                     if results_list:
-                        results_placeholder.dataframe(pd.DataFrame(results_list))
+                        df = pd.DataFrame.from_records(results_list).drop_duplicates()
+                        results_placeholder.dataframe(df, width="stretch")
                     progress_bar.progress(idx / total_lines)
 
             # remaining lines
@@ -97,17 +97,20 @@ class TeleLookupApp:
                 parsed = self.parse_line_fast(l)
                 if parsed and self.matches(parsed, id_query, user_query, phone_query):
                     results_list.append(parsed)
-                    if results_list:
-                        results_placeholder.dataframe(pd.DataFrame(results_list))
-            progress_bar.progress(1.0)
-            percent_text.text("Progress: 100%")
-            elapsed_text.text(f"Elapsed time: {time.time()-start_time:.1f} sec")
+
+        # پایان سرچ
+        progress_bar.progress(1.0)
+        percent_text.text("Progress: 100%")
+        elapsed_text.text(f"Elapsed time: {time.time()-start_time:.1f} sec")
 
         if results_list:
             df = pd.DataFrame.from_records(results_list).drop_duplicates()
             st.session_state["results"] = df
+            results_placeholder.dataframe(df, width="stretch")  # نهایی
         else:
             st.session_state["results"] = pd.DataFrame()
+            results_placeholder.info("No results found")
+
         st.session_state["search_clicked"] = True
         self.update_last_action()
 
@@ -142,43 +145,41 @@ class TeleLookupApp:
         with col1:
             st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
         with col2:
-            if st.button("Browse"):
+            if st.button("📁 Browse File"):
                 selected_path = self.browse_file()
                 if selected_path and os.path.exists(selected_path):
                     st.session_state["file_path"] = selected_path
                     st.session_state["show_search_ui"] = True
-                    st.success("File loaded successfully!")
+                    st.success("✅ File loaded successfully!")
                     self.update_last_action()
                 else:
-                    st.warning("No file selected or file does not exist.")
+                    st.warning("⚠️ No file selected or file does not exist.")
 
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
+            # 🔹 اول سرچ باکس‌ها
             left_col, right_col = st.columns([3, 1])
 
             with left_col:
-                id_query = st.text_input("ID", value="", key="id_search", max_chars=20)
-                user_query = st.text_input("Username", value="", key="user_search", max_chars=20)
-                phone_query = st.text_input("Phone", value="", key="phone_search", max_chars=20)
+                id_query = st.text_input("🔎 ID", value="", key="id_search", max_chars=20)
+                user_query = st.text_input("👤 Username", value="", key="user_search", max_chars=40)
+                phone_query = st.text_input("📞 Phone", value="", key="phone_search", max_chars=20)
+
+            # 🔹 جای نمایش نتایج (قبل از دکمه‌ها بسازیم که همیشه آماده باشه)
+            st.markdown("---")
+            results_placeholder = st.empty()
 
             with right_col:
-                st.markdown("<div style='display:flex; flex-direction:column; gap:5px;'>", unsafe_allow_html=True)
-                if st.button("Search"):
-                    self.search_file_streaming(id_query, user_query, phone_query)
-                if st.button("Reset"):
+                st.markdown("<div style='display:flex; flex-direction:column; gap:6px;'>", unsafe_allow_html=True)
+                if st.button("🚀 Search"):
+                    self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
+                if st.button("🔄 Reset"):
                     self.reset()
-                if st.button("Exit"):
+                    results_placeholder.empty()  # نتایج پاک بشه
+                if st.button("❌ Exit"):
                     st.info("Shutting down server...")
                     self.shutdown()
                 st.markdown("</div>", unsafe_allow_html=True)
-
-            results = st.session_state.get("results", pd.DataFrame())
-            if st.session_state.get("search_clicked", False):
-                if results.empty:
-                    st.info("No results found")
-                else:
-                    st.subheader("Search Results")
-                    st.dataframe(results, use_container_width=True)
 
 
 if __name__ == "__main__":
