@@ -173,6 +173,14 @@ class TeleLookupApp:
         root.attributes("-topmost", True)
         file_path = filedialog.askopenfilename(title="Select TeleDB File", filetypes=[("Text files", "*.txt")])
         root.destroy()
+
+        if not file_path:
+            return None  # کاربر Cancel زد
+
+        # فقط فایلی با نام TeleDB_light.txt معتبر است
+        if os.path.basename(file_path) != "TeleDB_light.txt":
+            return None
+
         return file_path
 
     def run(self):
@@ -194,7 +202,7 @@ class TeleLookupApp:
                     st.success("✅ File loaded successfully!")
                     self.update_last_action()
                 else:
-                    st.warning("⚠️ No file selected or file does not exist.")
+                    st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
 
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
