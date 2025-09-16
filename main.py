@@ -74,6 +74,9 @@ class TeleLookupApp:
         print(f"[TIMING] Counting lines took {time.time() - t0:.2f} sec (total lines: {total_lines})")
 
         # ---------- read + search ----------
+        parse_time = 0
+        match_time = 0
+        ui_time = 0
         t1 = time.time()
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             next(f)  # skip first line
@@ -81,20 +84,33 @@ class TeleLookupApp:
             for idx, line in enumerate(f, start=1):
                 chunk.append(line.strip())
                 if len(chunk) >= self.chunk_size:
+                    t_chunk = time.time()
                     for l in chunk:
+                        t0 = time.time()
                         parsed = self.parse_line_fast(l)
-                        if parsed and self.matches(parsed, id_query, user_query, phone_query):
-                            results_list.append(parsed)
+                        parse_time += time.time() - t0
+
+                        if parsed:
+                            t1 = time.time()
+                            if self.matches(parsed, id_query, user_query, phone_query):
+                                results_list.append(parsed)
+                            match_time += time.time() - t1
                     chunk = []
 
-                    # update UI (live results)
+                    # update UI
+                    t2 = time.time()
                     percent = min(int(idx / total_lines * 100), 100)
                     percent_text.text(f"Progress: {percent}%")
-                    elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
+                    elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
                     if results_list:
                         df = pd.DataFrame.from_records(results_list).drop_duplicates()
                         results_placeholder.dataframe(df, width="stretch")
                     progress_bar.progress(idx / total_lines)
+                    ui_time += time.time() - t2
+
+            print(f"[DETAIL] Parsing took {parse_time:.2f} sec")
+            print(f"[DETAIL] Matching took {match_time:.2f} sec")
+            print(f"[DETAIL] UI updates took {ui_time:.2f} sec")
 
             # remaining lines
             for l in chunk:
