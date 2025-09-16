@@ -217,6 +217,7 @@ class TeleLookupApp:
             # after rerun, show success message in this same column
             if st.session_state.get("file_loaded", False):
                 st.success("✅ File loaded successfully!")
+
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
             st.markdown("---")
