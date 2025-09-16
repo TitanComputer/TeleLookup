@@ -176,11 +176,6 @@ class TeleLookupApp:
 
         if not file_path:
             return None  # کاربر Cancel زد
-
-        # فقط فایلی با نام TeleDB_light.txt معتبر است
-        if os.path.basename(file_path) != "TeleDB_light.txt":
-            return None
-
         return file_path
 
     def run(self):
@@ -191,21 +186,40 @@ class TeleLookupApp:
 
         # --- File selection ---
         col1, col2 = st.columns([4, 1])
+
         with col1:
+            # show current selected file (no widget key so we can update via session_state + rerun)
             st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
+
         with col2:
-            if st.button("📁 Browse File"):
+            # disable browse button after a successful load
+            browse_disabled = st.session_state.get("show_search_ui", False)
+            if st.button("📁 Browse File", disabled=browse_disabled):
                 selected_path = self.browse_file()
-                if selected_path and os.path.exists(selected_path):
+
+                # بررسی اینکه آیا فایل انتخاب شده
+                if not selected_path:
+                    st.error("❌ No file selected.")
+                # بررسی اینکه فایل وجود داره
+                elif not os.path.isfile(selected_path):
+                    st.error("❌ File does not exist.")
+                # بررسی اینکه نام فایل درست باشه
+                elif os.path.basename(selected_path) != "TeleDB_light.txt":
+                    st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
+                else:
+                    # valid file: set session state and rerun to update UI
                     st.session_state["file_path"] = selected_path
                     st.session_state["show_search_ui"] = True
-                    st.success("✅ File loaded successfully!")
+                    st.session_state["file_loaded"] = True
                     self.update_last_action()
-                else:
-                    st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
+                    st.rerun()
 
+            # after rerun, show success message in this same column
+            if st.session_state.get("file_loaded", False):
+                st.success("✅ File loaded successfully!")
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
+            st.markdown("---")
             # 🔹 اول سرچ باکس‌ها
             left_col, right_col = st.columns([3, 1])
 
