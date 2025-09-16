@@ -188,11 +188,12 @@ class TeleLookupApp:
         col1, col2 = st.columns([4, 1])
 
         with col1:
-            # show current selected file (no widget key so we can update via session_state + rerun)
             st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
 
         with col2:
-            # disable browse button after a successful load
+            # فاصله برای هم‌تراز شدن با text_input
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+
             browse_disabled = st.session_state.get("show_search_ui", False)
             if st.button("📁 Browse File", disabled=browse_disabled):
                 selected_path = self.browse_file()
