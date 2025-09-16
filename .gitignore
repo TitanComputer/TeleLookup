@@ -211,3 +211,4 @@ __marimo__/
 
 *.exe
 main.*/
+.vscode/launch.json
