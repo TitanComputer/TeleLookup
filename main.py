@@ -9,7 +9,7 @@ from tkinter import filedialog
 
 
 class TeleLookupApp:
-    def __init__(self, idle_timeout=300, chunk_size=100000):
+    def __init__(self, idle_timeout=300, chunk_size=1000000):
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
 
@@ -34,13 +34,28 @@ class TeleLookupApp:
     # ---------- data handling ----------
     def parse_line_fast(self, line):
         try:
-            id_match = re.search(r"'id'\s*:\s*([0-9]+)", line)
-            user_match = re.search(r"'username'\s*:\s*'([^']*)'", line)
-            phone_match = re.search(r"'phone'\s*:\s*'([^']*)'", line)
-            if not (id_match and user_match and phone_match):
+            # سریع‌تر از regex
+            id_pos = line.find("'id'")
+            user_pos = line.find("'username'")
+            phone_pos = line.find("'phone'")
+
+            if id_pos == -1 or user_pos == -1 or phone_pos == -1:
                 return None
-            return {"id": id_match.group(1), "username": user_match.group(1), "phone": phone_match.group(1)}
-        except Exception:
+
+            # استخراج ID
+            id_start = line.find(":", id_pos) + 1
+            id_end = line.find(",", id_start)
+            user_start = line.find("'", user_pos + 10) + 1
+            user_end = line.find("'", user_start)
+            phone_start = line.find("'", phone_pos + 9) + 1
+            phone_end = line.find("'", phone_start)
+
+            return {
+                "id": line[id_start:id_end].strip(),
+                "username": line[user_start:user_end],
+                "phone": line[phone_start:phone_end],
+            }
+        except:
             return None
 
     def matches(self, parsed, id_query, user_query, phone_query):
