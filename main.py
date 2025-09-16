@@ -59,7 +59,7 @@ class TeleLookupApp:
             st.warning("No file loaded.")
             return
 
-        start_time = time.time()
+        total_start = time.time()
         results_list = []
 
         # placeholders
@@ -67,10 +67,14 @@ class TeleLookupApp:
         percent_text = st.empty()
         elapsed_text = st.empty()
 
-        # get total lines (approx)
+        # ---------- count total lines ----------
+        t0 = time.time()
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             total_lines = sum(1 for _ in f) - 1
+        print(f"[TIMING] Counting lines took {time.time() - t0:.2f} sec (total lines: {total_lines})")
 
+        # ---------- read + search ----------
+        t1 = time.time()
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             next(f)  # skip first line
             chunk = []
@@ -86,7 +90,7 @@ class TeleLookupApp:
                     # update UI (live results)
                     percent = min(int(idx / total_lines * 100), 100)
                     percent_text.text(f"Progress: {percent}%")
-                    elapsed_text.text(f"Elapsed time: {time.time()-start_time:.1f} sec")
+                    elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
                     if results_list:
                         df = pd.DataFrame.from_records(results_list).drop_duplicates()
                         results_placeholder.dataframe(df, width="stretch")
@@ -97,11 +101,12 @@ class TeleLookupApp:
                 parsed = self.parse_line_fast(l)
                 if parsed and self.matches(parsed, id_query, user_query, phone_query):
                     results_list.append(parsed)
+        print(f"[TIMING] Reading + searching took {time.time() - t1:.2f} sec")
 
-        # پایان سرچ
+        # ---------- finalize ----------
         progress_bar.progress(1.0)
         percent_text.text("Progress: 100%")
-        elapsed_text.text(f"Elapsed time: {time.time()-start_time:.1f} sec")
+        elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
 
         if results_list:
             df = pd.DataFrame.from_records(results_list).drop_duplicates()
@@ -110,6 +115,11 @@ class TeleLookupApp:
         else:
             st.session_state["results"] = pd.DataFrame()
             results_placeholder.info("No results found")
+
+        print(
+            f"[TIMING] Total search took {time.time() - total_start:.2f} sec "
+            f"(Count: {time.time()-t0:.2f}s, Processing: {time.time()-t1:.2f}s)"
+        )
 
         st.session_state["search_clicked"] = True
         self.update_last_action()
