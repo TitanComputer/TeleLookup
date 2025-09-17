@@ -171,7 +171,9 @@ class TeleLookupApp:
         root = tk.Tk()
         root.withdraw()
         root.attributes("-topmost", True)
-        file_path = filedialog.askopenfilename(title="Select TeleDB File", filetypes=[("Text files", "*.txt")])
+        file_path = filedialog.askopenfilename(
+            title="Select TeleDB_light.txt File", filetypes=[("Text files", "*.txt")]
+        )
         root.destroy()
 
         if not file_path:
@@ -215,9 +217,9 @@ class TeleLookupApp:
                     self.update_last_action()
                     st.rerun()
 
-            # after rerun, show success message in this same column
-            if st.session_state.get("file_loaded", False):
-                st.success("✅ File loaded successfully!")
+        # after rerun, show success message in this same column
+        if st.session_state.get("file_loaded", False):
+            st.success("✅ File loaded successfully!")
 
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
@@ -235,16 +237,31 @@ class TeleLookupApp:
             results_placeholder = st.empty()
 
             with right_col:
-                st.markdown("<div style='display:flex; flex-direction:column; gap:6px;'>", unsafe_allow_html=True)
-                if st.button("🚀 Search"):
+                # فاصله از بالا
+                st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+
+                # سه ستون برای سه دکمه در یک ردیف
+                btn1, btn2, btn3 = st.columns([1, 1, 1])
+
+                search_clicked = False  # فلگ برای تشخیص کلیک سرچ
+
+                with btn1:
+                    if st.button("🚀 Search"):
+                        search_clicked = True  # فقط فلگ رو تغییر میدیم
+
+                with btn2:
+                    if st.button("🔄 Reset"):
+                        self.reset()
+                        results_placeholder.empty()  # نتایج پاک بشه
+
+                with btn3:
+                    if st.button("❌ Exit"):
+                        st.info("Shutting down server...")
+                        self.shutdown()
+
+                # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
+                if search_clicked:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
-                if st.button("🔄 Reset"):
-                    self.reset()
-                    results_placeholder.empty()  # نتایج پاک بشه
-                if st.button("❌ Exit"):
-                    st.info("Shutting down server...")
-                    self.shutdown()
-                st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
