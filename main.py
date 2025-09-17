@@ -77,86 +77,138 @@ class TeleLookupApp:
 
         total_start = time.time()
         results_list = []
+        seen_ids = set()
 
         # placeholders
         progress_bar = st.progress(0)
         percent_text = st.empty()
         elapsed_text = st.empty()
 
-        # ---------- count total lines (only first time) ----------
-        t0 = time.time()
+        # ---------- count total lines ----------
+        t_count_start = time.time()
         if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 total_lines = sum(1 for _ in f) - 1
             st.session_state["total_lines"] = total_lines
             st.session_state["file_path_cached"] = file_path
-            print(f"[TIMING] Counting lines took {time.time() - t0:.2f} sec (total lines: {total_lines})")
+            print(f"[TIMING] Counting lines took {time.time() - t_count_start:.2f} sec (total lines: {total_lines})")
         else:
             total_lines = st.session_state["total_lines"]
             print(f"[CACHE] Using cached line count: {total_lines}")
 
+        # prepare search terms
+        id_q = id_query.strip() if id_query else None
+        user_q = user_query.lower().strip() if user_query else None
+        phone_q = phone_query.strip() if phone_query else None
+
         # ---------- read + search ----------
-        parse_time = 0
-        match_time = 0
-        ui_time = 0
-        t1 = time.time()
+        parse_time = match_time = ui_time = df_time = dedup_time = 0.0
+        io_time = 0.0
+        t_proc_start = time.time()
+
+        ui_update_interval = 0.5
+        last_ui_update = 0.0
+
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            next(f)  # skip first line
+            next(f)  # skip header
             chunk = []
             for idx, line in enumerate(f, start=1):
-                chunk.append(line.strip())
+                t_io = time.time()
+                chunk.append(line.rstrip("\n"))
+                io_time += time.time() - t_io
+
                 if len(chunk) >= self.chunk_size:
+                    # process chunk
                     t_chunk = time.time()
                     for l in chunk:
-                        t0 = time.time()
+                        t_parse = time.time()
                         parsed = self.parse_line_fast(l)
-                        parse_time += time.time() - t0
+                        parse_time += time.time() - t_parse
 
                         if parsed:
-                            t1 = time.time()
-                            if self.matches(parsed, id_query, user_query, phone_query):
-                                results_list.append(parsed)
-                            match_time += time.time() - t1
+                            t_match = time.time()
+                            if id_q and id_q not in parsed["id"]:
+                                pass
+                            elif user_q and user_q not in parsed["username"].lower():
+                                pass
+                            elif phone_q and phone_q not in parsed["phone"]:
+                                pass
+                            else:
+                                t_dedup = time.time()
+                                pid = parsed["id"]
+                                if pid not in seen_ids:
+                                    seen_ids.add(pid)
+                                    results_list.append(parsed)
+                                dedup_time += time.time() - t_dedup
+                            match_time += time.time() - t_match
                     chunk = []
-
-                    # update UI
-                    t2 = time.time()
-                    percent = min(int(idx / total_lines * 100), 100)
-                    percent_text.text(f"Progress: {percent}%")
-                    elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
-                    if results_list:
-                        df = pd.DataFrame.from_records(results_list).drop_duplicates()
-                        results_placeholder.dataframe(df, width="stretch")
-                    progress_bar.progress(idx / total_lines)
-                    ui_time += time.time() - t2
-
-            print(f"[DETAIL] Parsing took {parse_time:.2f} sec")
-            print(f"[DETAIL] Matching took {match_time:.2f} sec")
-            print(f"[DETAIL] UI updates took {ui_time:.2f} sec")
+                    # UI
+                    now = time.time()
+                    if now - last_ui_update >= ui_update_interval:
+                        t_ui = time.time()
+                        percent = min(int(idx / total_lines * 100), 100)
+                        percent_text.text(f"Progress: {percent}%")
+                        elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
+                        if results_list:
+                            t_df = time.time()
+                            df = pd.DataFrame.from_records(results_list)
+                            df_time += time.time() - t_df
+                            results_placeholder.dataframe(df, width="stretch")
+                        progress_bar.progress(idx / total_lines)
+                        ui_time += time.time() - t_ui
+                        last_ui_update = now
 
             # remaining lines
             for l in chunk:
+                t_parse = time.time()
                 parsed = self.parse_line_fast(l)
-                if parsed and self.matches(parsed, id_query, user_query, phone_query):
-                    results_list.append(parsed)
-        print(f"[TIMING] Reading + searching took {time.time() - t1:.2f} sec")
+                parse_time += time.time() - t_parse
 
-        # ---------- finalize ----------
+                if parsed:
+                    t_match = time.time()
+                    if id_q and id_q not in parsed["id"]:
+                        pass
+                    elif user_q and user_q not in parsed["username"].lower():
+                        pass
+                    elif phone_q and phone_q not in parsed["phone"]:
+                        pass
+                    else:
+                        t_dedup = time.time()
+                        pid = parsed["id"]
+                        if pid not in seen_ids:
+                            seen_ids.add(pid)
+                            results_list.append(parsed)
+                        dedup_time += time.time() - t_dedup
+                    match_time += time.time() - t_match
+
+        t_proc = time.time() - t_proc_start
+
+        # finalize
         progress_bar.progress(1.0)
         percent_text.text("Progress: 100%")
         elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
 
         if results_list:
-            df = pd.DataFrame.from_records(results_list).drop_duplicates()
+            t_df = time.time()
+            df = pd.DataFrame.from_records(results_list)
+            df_time += time.time() - t_df
             st.session_state["results"] = df
-            results_placeholder.dataframe(df, width="stretch")  # نهایی
+            results_placeholder.dataframe(df, width="stretch")
         else:
             st.session_state["results"] = pd.DataFrame()
             results_placeholder.info("No results found")
 
+        # timings
+        print(f"[DETAIL] I/O read took {io_time:.2f} sec")
+        print(f"[DETAIL] Parsing took {parse_time:.2f} sec")
+        print(f"[DETAIL] Matching took {match_time:.2f} sec")
+        print(f"[DETAIL] Dedup check took {dedup_time:.2f} sec")
+        print(f"[DETAIL] DataFrame convert took {df_time:.2f} sec")
+        print(f"[DETAIL] UI updates took {ui_time:.2f} sec")
+        print(f"[TIMING] Reading + searching took {t_proc:.2f} sec")
         print(
             f"[TIMING] Total search took {time.time() - total_start:.2f} sec "
-            f"(Count: {time.time()-t0:.2f}s, Processing: {time.time()-t1:.2f}s)"
+            f"(Count: {time.time()-t_count_start:.2f}s, Processing: {t_proc:.2f}s)"
         )
 
         st.session_state["search_clicked"] = True
