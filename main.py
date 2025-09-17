@@ -83,11 +83,17 @@ class TeleLookupApp:
         percent_text = st.empty()
         elapsed_text = st.empty()
 
-        # ---------- count total lines ----------
+        # ---------- count total lines (only first time) ----------
         t0 = time.time()
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            total_lines = sum(1 for _ in f) - 1
-        print(f"[TIMING] Counting lines took {time.time() - t0:.2f} sec (total lines: {total_lines})")
+        if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                total_lines = sum(1 for _ in f) - 1
+            st.session_state["total_lines"] = total_lines
+            st.session_state["file_path_cached"] = file_path
+            print(f"[TIMING] Counting lines took {time.time() - t0:.2f} sec (total lines: {total_lines})")
+        else:
+            total_lines = st.session_state["total_lines"]
+            print(f"[CACHE] Using cached line count: {total_lines}")
 
         # ---------- read + search ----------
         parse_time = 0
