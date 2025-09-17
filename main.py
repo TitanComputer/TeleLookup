@@ -12,6 +12,7 @@ class TeleLookupApp:
     def __init__(self, idle_timeout=300, chunk_size=1000000):
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
+        self.check_idle_timeout()
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -262,6 +263,7 @@ class TeleLookupApp:
                 # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
                 if search_clicked:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
+        self.check_idle_timeout()
 
 
 if __name__ == "__main__":
