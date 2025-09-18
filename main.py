@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import signal
 import time
-import re
+import threading
 import tkinter as tk
 from tkinter import filedialog
 
