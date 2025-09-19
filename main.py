@@ -53,6 +53,7 @@ class TeleLookupApp:
 
     # ---------- utility ----------
     def update_last_action(self):
+        return
         st.session_state["last_action"] = time.time()
 
     def shutdown(self):
