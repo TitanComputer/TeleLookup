@@ -7,12 +7,38 @@ import threading
 import tkinter as tk
 from tkinter import filedialog
 
+# ===== ایجاد shared_state در سطح global/script
+if "shared_state" not in st.session_state:
+    st.session_state["shared_state"] = {"last_action": time.time()}
+
+
+# ===== تعریف watchdog
+def watchdog(shared_state, idle_timeout):
+    while True:
+        last_action = shared_state["last_action"]
+        if time.time() - last_action > idle_timeout:
+            print("No activity detected, shutting down...")
+            os.kill(os.getpid(), signal.SIGTERM)
+        time.sleep(1)
+        print(last_action)
+
+
+# ===== استارت ترد
+if "watchdog_started" not in st.session_state:
+    threading.Thread(target=watchdog, args=(st.session_state["shared_state"], 20), daemon=True).start()
+    st.session_state["watchdog_started"] = True
+
+
+# ===== fragment برای keep-alive
+@st.fragment(run_every="2s")
+def keep_alive_fragment():
+    st.session_state["shared_state"]["last_action"] = time.time()
+
 
 class TeleLookupApp:
     def __init__(self, idle_timeout=300, chunk_size=1000000):
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
-        self.check_idle_timeout()
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -95,6 +121,7 @@ class TeleLookupApp:
         else:
             total_lines = st.session_state["total_lines"]
             print(f"[CACHE] Using cached line count: {total_lines}")
+        st.session_state["shared_state"]["last_action"] = time.time()
 
         # prepare search terms
         id_q = id_query.strip() if id_query else None
@@ -143,6 +170,7 @@ class TeleLookupApp:
                             match_time += time.time() - t_match
                     chunk = []
                     # UI
+                    st.session_state["shared_state"]["last_action"] = time.time()
                     now = time.time()
                     if now - last_ui_update >= ui_update_interval:
                         t_ui = time.time()
@@ -157,6 +185,7 @@ class TeleLookupApp:
                         progress_bar.progress(idx / total_lines)
                         ui_time += time.time() - t_ui
                         last_ui_update = now
+                    time.sleep(0)
 
             # remaining lines
             for l in chunk:
@@ -241,7 +270,7 @@ class TeleLookupApp:
 
     def run(self):
         st.set_page_config(page_title="TeleLookup", layout="wide")
-        self.check_idle_timeout()
+        keep_alive_fragment()
 
         st.title("📂 TeleLookup")
 
@@ -321,7 +350,6 @@ class TeleLookupApp:
                 # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
                 if search_clicked:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
-        self.check_idle_timeout()
 
 
 if __name__ == "__main__":
