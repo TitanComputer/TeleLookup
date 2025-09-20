@@ -60,26 +60,56 @@ class TeleLookupApp:
         os.kill(os.getpid(), signal.SIGTERM)
 
     # ---------- data handling ----------
-    def parse_line_fast(self, line):
-        try:
-            # سریع‌تر از regex
-            id_pos = line.find("'id'")
-            user_pos = line.find("'username'")
-            phone_pos = line.find("'phone'")
+    # def parse_line_fast(self, line):
+    #     try:
+    #         # سریع‌تر از regex
+    #         id_pos = line.find("'id'")
+    #         user_pos = line.find("'username'")
+    #         phone_pos = line.find("'phone'")
 
-            if id_pos == -1 or user_pos == -1 or phone_pos == -1:
+    #         if id_pos == -1 or user_pos == -1 or phone_pos == -1:
+    #             return None
+
+    #         # استخراج ID
+    #         id_start = line.find(":", id_pos) + 1
+    #         id_end = line.find(",", id_start)
+    #         user_start = line.find("'", user_pos + 10) + 1
+    #         user_end = line.find("'", user_start)
+    #         phone_start = line.find("'", phone_pos + 9) + 1
+    #         phone_end = line.find("'", phone_start)
+
+    #         return {
+    #             "id": line[id_start:id_end].strip(),
+    #             "username": line[user_start:user_end],
+    #             "phone": line[phone_start:phone_end],
+    #         }
+    #     except:
+    #         return None
+
+    def parse_line_fast(self, line: str):
+        try:
+            # یکبار scan از ابتدا تا انتها
+            id_idx = line.find("'id':")
+            user_idx = line.find("'username':")
+            phone_idx = line.find("'phone':")
+
+            if id_idx == -1 or user_idx == -1 or phone_idx == -1:
                 return None
 
             # استخراج ID
-            id_start = line.find(":", id_pos) + 1
+            id_start = id_idx + 5
             id_end = line.find(",", id_start)
-            user_start = line.find("'", user_pos + 10) + 1
+
+            # استخراج username
+            user_start = line.find("'", user_idx + 11) + 1
             user_end = line.find("'", user_start)
-            phone_start = line.find("'", phone_pos + 9) + 1
+
+            # استخراج phone
+            phone_start = line.find("'", phone_idx + 9) + 1
             phone_end = line.find("'", phone_start)
 
             return {
-                "id": line[id_start:id_end].strip(),
+                "id": line[id_start:id_end],
                 "username": line[user_start:user_end],
                 "phone": line[phone_start:phone_end],
             }
@@ -152,38 +182,30 @@ class TeleLookupApp:
         ui_update_interval = 0.5
         last_ui_update = 0.0
 
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, "r", encoding="utf-8", errors="ignore", buffering=16 * 1024 * 1024) as f:
             next(f)  # skip header
             chunk = []
             for idx, line in enumerate(f, start=1):
                 t_io = time.time()
-                chunk.append(line.rstrip("\n"))
+                chunk.append(line)
                 io_time += time.time() - t_io
 
                 if len(chunk) >= self.chunk_size:
                     # process chunk
-                    t_chunk = time.time()
                     for l in chunk:
-                        t_parse = time.time()
                         parsed = self.parse_line_fast(l)
-                        parse_time += time.time() - t_parse
-
                         if parsed:
-                            t_match = time.time()
+                            username_lower = parsed["username"].lower()
                             if id_q and id_q not in parsed["id"]:
-                                pass
-                            elif user_q and user_q not in parsed["username"].lower():
-                                pass
-                            elif phone_q and phone_q not in parsed["phone"]:
-                                pass
-                            else:
-                                t_dedup = time.time()
-                                pid = parsed["id"]
-                                if pid not in seen_ids:
-                                    seen_ids.add(pid)
-                                    results_list.append(parsed)
-                                dedup_time += time.time() - t_dedup
-                            match_time += time.time() - t_match
+                                continue
+                            if user_q and user_q not in username_lower:
+                                continue
+                            if phone_q and phone_q not in parsed["phone"]:
+                                continue
+                            pid = parsed["id"]
+                            if pid not in seen_ids:
+                                seen_ids.add(pid)
+                                results_list.append(parsed)
                     chunk = []
                     # UI
                     st.session_state["shared_state"]["last_action"] = time.time()
@@ -205,26 +227,19 @@ class TeleLookupApp:
 
             # remaining lines
             for l in chunk:
-                t_parse = time.time()
                 parsed = self.parse_line_fast(l)
-                parse_time += time.time() - t_parse
-
                 if parsed:
-                    t_match = time.time()
+                    username_lower = parsed["username"].lower()
                     if id_q and id_q not in parsed["id"]:
-                        pass
-                    elif user_q and user_q not in parsed["username"].lower():
-                        pass
-                    elif phone_q and phone_q not in parsed["phone"]:
-                        pass
-                    else:
-                        t_dedup = time.time()
-                        pid = parsed["id"]
-                        if pid not in seen_ids:
-                            seen_ids.add(pid)
-                            results_list.append(parsed)
-                        dedup_time += time.time() - t_dedup
-                    match_time += time.time() - t_match
+                        continue
+                    if user_q and user_q not in username_lower:
+                        continue
+                    if phone_q and phone_q not in parsed["phone"]:
+                        continue
+                    pid = parsed["id"]
+                    if pid not in seen_ids:
+                        seen_ids.add(pid)
+                        results_list.append(parsed)
 
         t_proc = time.time() - t_proc_start
 
