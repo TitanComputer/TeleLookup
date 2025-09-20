@@ -271,7 +271,7 @@ class TeleLookupApp:
             f"(Count: {time.time()-t_count_start:.2f}s, Processing: {t_proc:.2f}s)"
         )
 
-        st.session_state["search_clicked"] = True
+        # st.session_state["search_clicked"] = True
         self.update_last_action()
 
     def reset(self):
@@ -362,11 +362,11 @@ class TeleLookupApp:
                 # سه ستون برای سه دکمه در یک ردیف
                 btn1, btn2, btn3 = st.columns([1, 1, 1])
 
-                search_clicked = False  # فلگ برای تشخیص کلیک سرچ
+                # st.session_state["search_clicked"] = False  # فلگ برای تشخیص کلیک سرچ
 
                 with btn1:
                     if st.button("🚀 Search"):
-                        search_clicked = True  # فقط فلگ رو تغییر میدیم
+                        st.session_state["search_clicked"] = True  # فقط فلگ رو تغییر میدیم
 
                 with btn2:
                     if st.button("🔄 Reset"):
@@ -379,7 +379,7 @@ class TeleLookupApp:
                         self.shutdown()
 
                 # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
-                if search_clicked:
+                if st.session_state["search_clicked"]:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
 
 
