@@ -251,9 +251,8 @@ class TeleLookupApp:
         if results_list:
             t_df = time.time()
             df = pd.DataFrame.from_records(results_list)
-            df_time += time.time() - t_df
             st.session_state["results"] = df
-            results_placeholder.dataframe(df, width="stretch")
+            df_time += time.time() - t_df
         else:
             st.session_state["results"] = pd.DataFrame()
             results_placeholder.info("No results found")
@@ -271,7 +270,8 @@ class TeleLookupApp:
             f"(Count: {time.time()-t_count_start:.2f}s, Processing: {t_proc:.2f}s)"
         )
 
-        # st.session_state["search_clicked"] = True
+        st.session_state["search_clicked"] = False
+        st.rerun()
         self.update_last_action()
 
     def reset(self):
@@ -347,13 +347,25 @@ class TeleLookupApp:
             left_col, right_col = st.columns([3, 1])
 
             with left_col:
-                id_query = st.text_input("🔎 ID", value="", key="id_search", max_chars=20)
-                user_query = st.text_input("👤 Username", value="", key="user_search", max_chars=40)
-                phone_query = st.text_input("📞 Phone", value="", key="phone_search", max_chars=20)
+                id_query = st.text_input(
+                    "🔎 ID", value="", key="id_search", max_chars=20, disabled=st.session_state["search_clicked"]
+                )
+                user_query = st.text_input(
+                    "👤 Username",
+                    value="",
+                    key="user_search",
+                    max_chars=40,
+                    disabled=st.session_state["search_clicked"],
+                )
+                phone_query = st.text_input(
+                    "📞 Phone", value="", key="phone_search", max_chars=20, disabled=st.session_state["search_clicked"]
+                )
 
             # 🔹 جای نمایش نتایج (قبل از دکمه‌ها بسازیم که همیشه آماده باشه)
             st.markdown("---")
             results_placeholder = st.empty()
+            if not st.session_state["results"].empty:
+                results_placeholder.dataframe(st.session_state["results"], width="stretch")
 
             with right_col:
                 # فاصله از بالا
@@ -367,14 +379,15 @@ class TeleLookupApp:
                 with btn1:
                     if st.button("🚀 Search"):
                         st.session_state["search_clicked"] = True  # فقط فلگ رو تغییر میدیم
+                        st.rerun()
 
                 with btn2:
-                    if st.button("🔄 Reset"):
+                    if st.button("🔄 Reset", disabled=st.session_state["search_clicked"]):
                         self.reset()
-                        results_placeholder.empty()  # نتایج پاک بشه
+                        results_placeholder.empty()
 
                 with btn3:
-                    if st.button("❌ Exit"):
+                    if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
                         st.info("Shutting down server...")
                         self.shutdown()
 
