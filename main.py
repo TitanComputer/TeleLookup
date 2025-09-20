@@ -19,13 +19,13 @@ def watchdog(shared_state, idle_timeout):
         if time.time() - last_action > idle_timeout:
             print("No activity detected, shutting down...")
             os.kill(os.getpid(), signal.SIGTERM)
-        time.sleep(1)
-        print(last_action)
+        time.sleep(5)
+        # print(last_action)
 
 
 # ===== استارت ترد
 if "watchdog_started" not in st.session_state:
-    threading.Thread(target=watchdog, args=(st.session_state["shared_state"], 20), daemon=True).start()
+    threading.Thread(target=watchdog, args=(st.session_state["shared_state"], 300), daemon=True).start()
     st.session_state["watchdog_started"] = True
 
 
@@ -111,18 +111,33 @@ class TeleLookupApp:
         percent_text = st.empty()
         elapsed_text = st.empty()
 
+        # # ---------- count total lines ----------
+        # t_count_start = time.time()
+        # if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
+        #     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        #         total_lines = sum(1 for _ in f) - 1
+        #     st.session_state["total_lines"] = total_lines
+        #     st.session_state["file_path_cached"] = file_path
+        #     print(f"[TIMING] Counting lines took {time.time() - t_count_start:.2f} sec (total lines: {total_lines})")
+        # else:
+        #     total_lines = st.session_state["total_lines"]
+        #     print(f"[CACHE] Using cached line count: {total_lines}")
+        # st.session_state["shared_state"]["last_action"] = time.time()
+
         # ---------- count total lines ----------
+        def count_lines_fast(filename):
+            with open(filename, "rb") as f:
+                return sum(buf.count(b"\n") for buf in iter(lambda: f.read(1024 * 1024), b""))
+
         t_count_start = time.time()
         if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                total_lines = sum(1 for _ in f) - 1
+            total_lines = count_lines_fast(file_path)
             st.session_state["total_lines"] = total_lines
             st.session_state["file_path_cached"] = file_path
             print(f"[TIMING] Counting lines took {time.time() - t_count_start:.2f} sec (total lines: {total_lines})")
         else:
             total_lines = st.session_state["total_lines"]
             print(f"[CACHE] Using cached line count: {total_lines}")
-        st.session_state["shared_state"]["last_action"] = time.time()
 
         # prepare search terms
         id_q = id_query.strip() if id_query else None
