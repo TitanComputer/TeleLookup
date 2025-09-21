@@ -72,33 +72,6 @@ class TeleLookupApp:
     def shutdown(self):
         os.kill(os.getpid(), signal.SIGTERM)
 
-    # ---------- data handling ----------
-    # def parse_line_fast(self, line):
-    #     try:
-    #         # سریع‌تر از regex
-    #         id_pos = line.find("'id'")
-    #         user_pos = line.find("'username'")
-    #         phone_pos = line.find("'phone'")
-
-    #         if id_pos == -1 or user_pos == -1 or phone_pos == -1:
-    #             return None
-
-    #         # استخراج ID
-    #         id_start = line.find(":", id_pos) + 1
-    #         id_end = line.find(",", id_start)
-    #         user_start = line.find("'", user_pos + 10) + 1
-    #         user_end = line.find("'", user_start)
-    #         phone_start = line.find("'", phone_pos + 9) + 1
-    #         phone_end = line.find("'", phone_start)
-
-    #         return {
-    #             "id": line[id_start:id_end].strip(),
-    #             "username": line[user_start:user_end],
-    #             "phone": line[phone_start:phone_end],
-    #         }
-    #     except:
-    #         return None
-
     def parse_line_fast(self, line: str):
         try:
             # یکبار scan از ابتدا تا انتها
@@ -154,19 +127,6 @@ class TeleLookupApp:
         percent_text = st.empty()
         elapsed_text = st.empty()
         found_text = st.empty()
-
-        # # ---------- count total lines ----------
-        # t_count_start = time.time()
-        # if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
-        #     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        #         total_lines = sum(1 for _ in f) - 1
-        #     st.session_state["total_lines"] = total_lines
-        #     st.session_state["file_path_cached"] = file_path
-        #     print(f"[TIMING] Counting lines took {time.time() - t_count_start:.2f} sec (total lines: {total_lines})")
-        # else:
-        #     total_lines = st.session_state["total_lines"]
-        #     print(f"[CACHE] Using cached line count: {total_lines}")
-        # st.session_state["shared_state"]["last_action"] = time.time()
 
         # ---------- count total lines ----------
         def count_lines_fast(filename):
