@@ -12,7 +12,7 @@ if "shared_state" not in st.session_state:
     st.session_state["shared_state"] = {"last_action": time.time()}
 
 
-# ===== تعریف watchdog
+# ===== watchdog function
 def watchdog(shared_state, idle_timeout):
     while True:
         last_action = shared_state["last_action"]
@@ -23,16 +23,25 @@ def watchdog(shared_state, idle_timeout):
         # print(last_action)
 
 
-# ===== استارت ترد
-if "watchdog_started" not in st.session_state:
-    threading.Thread(target=watchdog, args=(st.session_state["shared_state"], 300), daemon=True).start()
-    st.session_state["watchdog_started"] = True
+# ===== singleton shared state + watchdog thread
+@st.cache_resource
+def get_shared_state():
+    shared_state = {"last_action": time.time()}
+
+    # start watchdog thread only once per process
+    threading.Thread(target=watchdog, args=(shared_state, 300), daemon=True).start()
+
+    return shared_state
+
+
+# ===== get shared state for this session
+shared_state = get_shared_state()
 
 
 # ===== fragment برای keep-alive
 @st.fragment(run_every="2s")
 def keep_alive_fragment():
-    st.session_state["shared_state"]["last_action"] = time.time()
+    shared_state["last_action"] = time.time()
 
 
 class TeleLookupApp:
