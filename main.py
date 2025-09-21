@@ -337,35 +337,37 @@ class TeleLookupApp:
         st.title("📂 TeleLookup")
 
         # --- File selection ---
-        col1, col2 = st.columns([4, 1])
+        if not st.session_state.get("file_loaded", False):
+            st.info("Please select the 'TeleDB_light.txt' file to proceed.")
+            col1, col2 = st.columns([4, 1])
 
-        with col1:
-            st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
+            with col1:
+                st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
 
-        with col2:
-            # فاصله برای هم‌تراز شدن با text_input
-            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            with col2:
+                # فاصله برای هم‌تراز شدن با text_input
+                st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
 
-            browse_disabled = st.session_state.get("show_search_ui", False)
-            if st.button("📁 Browse File", disabled=browse_disabled):
-                selected_path = self.browse_file()
+                if st.button("📁 Browse File", disabled=st.session_state.get("show_search_ui", False)):
+                    time.sleep(0)
+                    selected_path = self.browse_file()
 
-                # بررسی اینکه آیا فایل انتخاب شده
-                if not selected_path:
-                    st.error("❌ No file selected.")
-                # بررسی اینکه فایل وجود داره
-                elif not os.path.isfile(selected_path):
-                    st.error("❌ File does not exist.")
-                # بررسی اینکه نام فایل درست باشه
-                elif os.path.basename(selected_path) != "TeleDB_light.txt":
-                    st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
-                else:
-                    # valid file: set session state and rerun to update UI
-                    st.session_state["file_path"] = selected_path
-                    st.session_state["show_search_ui"] = True
-                    st.session_state["file_loaded"] = True
-                    self.update_last_action()
-                    st.rerun()
+                    # بررسی اینکه آیا فایل انتخاب شده
+                    if not selected_path:
+                        st.error("❌ No file selected.")
+                    # بررسی اینکه فایل وجود داره
+                    elif not os.path.isfile(selected_path):
+                        st.error("❌ File does not exist.")
+                    # بررسی اینکه نام فایل درست باشه
+                    elif os.path.basename(selected_path) != "TeleDB_light.txt":
+                        st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
+                    else:
+                        # valid file: set session state and rerun to update UI
+                        st.session_state["file_path"] = selected_path
+                        st.session_state["show_search_ui"] = True
+                        st.session_state["file_loaded"] = True
+                        self.update_last_action()
+                        st.rerun()
 
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
