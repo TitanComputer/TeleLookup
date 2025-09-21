@@ -51,6 +51,8 @@ class TeleLookupApp:
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
+        if "file_loaded" not in st.session_state:
+            st.session_state["file_loaded"] = False
         if "results" not in st.session_state:
             st.session_state["results"] = pd.DataFrame()
         if "search_clicked" not in st.session_state:
@@ -349,7 +351,6 @@ class TeleLookupApp:
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
 
                 if st.button("📁 Browse File", disabled=st.session_state.get("show_search_ui", False)):
-                    time.sleep(0)
                     selected_path = self.browse_file()
 
                     # بررسی اینکه آیا فایل انتخاب شده
@@ -371,7 +372,7 @@ class TeleLookupApp:
 
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
-            st.success("✅ File loaded successfully!")
+            st.success("✅ TeleDB_light.txt File loaded successfully!")
 
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
