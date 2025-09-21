@@ -142,6 +142,7 @@ class TeleLookupApp:
         progress_bar = st.progress(0)
         percent_text = st.empty()
         elapsed_text = st.empty()
+        found_text = st.empty()
 
         # # ---------- count total lines ----------
         # t_count_start = time.time()
@@ -215,8 +216,10 @@ class TeleLookupApp:
                     if now - last_ui_update >= ui_update_interval:
                         t_ui = time.time()
                         percent = min(int(idx / total_lines * 100), 100)
+                        found_count = len(results_list)
                         percent_text.text(f"Progress: {percent}%")
                         elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
+                        found_text.text(f"Found: {found_count}")
                         if results_list:
                             t_df = time.time()
                             df = pd.DataFrame.from_records(results_list)
@@ -249,6 +252,7 @@ class TeleLookupApp:
         progress_bar.progress(1.0)
         percent_text.text("Progress: 100%")
         elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
+        found_text.text(f"Found: {found_count}")
 
         if results_list:
             t_df = time.time()
