@@ -223,6 +223,7 @@ class TeleLookupApp:
                         if results_list:
                             t_df = time.time()
                             df = pd.DataFrame.from_records(results_list)
+                            df.index = range(1, len(df) + 1)
                             df_time += time.time() - t_df
                             results_placeholder.dataframe(df, width="stretch")
                         progress_bar.progress(idx / total_lines)
@@ -257,6 +258,7 @@ class TeleLookupApp:
         if results_list:
             t_df = time.time()
             df = pd.DataFrame.from_records(results_list)
+            df.index = range(1, len(df) + 1)
             df_time += time.time() - t_df
             # ذخیره در session_state (تا بعد از rerun هم بماند)
             st.session_state["results"] = df
