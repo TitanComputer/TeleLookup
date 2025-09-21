@@ -282,6 +282,10 @@ class TeleLookupApp:
         )
 
         st.session_state["search_clicked"] = False
+        st.session_state["final_results"] = st.session_state["results"]
+        st.session_state["final_progress"] = 100
+        st.session_state["final_elapsed"] = f"Elapsed time: {time.time()-total_start:.1f} sec"
+        st.session_state["final_found"] = f"Found: {len(results_list)}"
         st.rerun()
         self.update_last_action()
 
@@ -289,6 +293,10 @@ class TeleLookupApp:
         st.session_state["results"] = pd.DataFrame()
         st.session_state["search_clicked"] = False
         st.session_state["no_results_found"] = False
+        st.session_state.pop("final_results", None)
+        st.session_state.pop("final_elapsed", None)
+        st.session_state.pop("final_found", None)
+
         self.update_last_action()
 
     # ---------- idle ----------
@@ -415,6 +423,12 @@ class TeleLookupApp:
                 # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
                 if st.session_state["search_clicked"]:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
+
+                if "final_results" in st.session_state:
+                    st.progress(1.0)
+                    st.write("Progress: 100%")
+                    st.write(st.session_state["final_elapsed"])
+                    st.write(st.session_state["final_found"])
 
 
 if __name__ == "__main__":
