@@ -344,13 +344,18 @@ class TeleLookupApp:
             col1, col2 = st.columns([4, 1])
 
             with col1:
-                st.text_input("Selected File", value=st.session_state.get("file_path", ""), disabled=True)
+                st.text_input(
+                    "Selected File", value=st.session_state.get("file_path", ""), disabled=True, key="file_input"
+                )
 
             with col2:
                 # فاصله برای هم‌تراز شدن با text_input
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
 
-                if st.button("📁 Browse File", disabled=st.session_state.get("show_search_ui", False)):
+                if st.button(
+                    "📁 Browse File", disabled=st.session_state.get("show_search_ui", False), key="browse_btn"
+                ):
+
                     selected_path = self.browse_file()
 
                     # بررسی اینکه آیا فایل انتخاب شده
