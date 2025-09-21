@@ -50,6 +50,8 @@ class TeleLookupApp:
             st.session_state["last_action"] = time.time()
         if "show_search_ui" not in st.session_state:
             st.session_state["show_search_ui"] = False
+        if "no_results_found" not in st.session_state:
+            st.session_state["no_results_found"] = False
 
     # ---------- utility ----------
     def update_last_action(self):
@@ -251,10 +253,15 @@ class TeleLookupApp:
         if results_list:
             t_df = time.time()
             df = pd.DataFrame.from_records(results_list)
-            st.session_state["results"] = df
             df_time += time.time() - t_df
+            # ذخیره در session_state (تا بعد از rerun هم بماند)
+            st.session_state["results"] = df
+            st.session_state["no_results_found"] = False
+            results_placeholder.dataframe(df, width="stretch")
         else:
+            # هیچ نتیجه‌ای پیدا نشده
             st.session_state["results"] = pd.DataFrame()
+            st.session_state["no_results_found"] = True
             results_placeholder.info("No results found")
 
         # timings
@@ -277,6 +284,7 @@ class TeleLookupApp:
     def reset(self):
         st.session_state["results"] = pd.DataFrame()
         st.session_state["search_clicked"] = False
+        st.session_state["no_results_found"] = False
         self.update_last_action()
 
     # ---------- idle ----------
@@ -364,8 +372,13 @@ class TeleLookupApp:
             # 🔹 جای نمایش نتایج (قبل از دکمه‌ها بسازیم که همیشه آماده باشه)
             st.markdown("---")
             results_placeholder = st.empty()
+
             if not st.session_state["results"].empty:
                 results_placeholder.dataframe(st.session_state["results"], width="stretch")
+            elif st.session_state.get("no_results_found", False):
+                # اگر سرچ تموم شد ولی هیچ نتیجه‌ای نبود
+                results_placeholder.info("No results found")
+            # در غیر این صورت چیزی نمایش داده نمیشه (شروع سرچ جدول خالی خواهد بود)
 
             with right_col:
                 # فاصله از بالا
@@ -375,10 +388,14 @@ class TeleLookupApp:
                 btn1, btn2, btn3 = st.columns([1, 1, 1])
 
                 # st.session_state["search_clicked"] = False  # فلگ برای تشخیص کلیک سرچ
-
                 with btn1:
                     if st.button("🚀 Search"):
-                        st.session_state["search_clicked"] = True  # فقط فلگ رو تغییر میدیم
+                        # پاک کردن نتایج قبلی بلافاصله
+                        st.session_state["results"] = pd.DataFrame()
+                        st.session_state["no_results_found"] = False
+                        # شروع سرچ
+                        st.session_state["search_clicked"] = True
+                        # ری‌ران تا disabled شدن اینپوت‌ها و وضعیت دکمه‌ها اعمال بشه
                         st.rerun()
 
                 with btn2:
