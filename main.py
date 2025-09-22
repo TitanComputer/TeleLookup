@@ -167,8 +167,9 @@ class TeleLookupApp:
                     if len(chunk) >= self.chunk_size:
                         append = results_list.append
                         add = seen_ids.add
+                        parse_line = self.parse_line_fast
                         for l in chunk:
-                            parsed = self.parse_line_fast(l)
+                            parsed = parse_line(l)
                             if parsed:
                                 username_lower = parsed["username"].lower()
                                 if id_q and id_q not in parsed["id"]:
@@ -202,10 +203,11 @@ class TeleLookupApp:
                         # time.sleep(0)
 
                 # remaining lines
+                parsed = self.parse_line_fast(l)
                 for l in chunk:
                     append = results_list.append
                     add = seen_ids.add
-                    parsed = self.parse_line_fast(l)
+                    parsed = parse_line(l)
                     if parsed:
                         username_lower = parsed["username"].lower()
                         if id_q and id_q not in parsed["id"]:
