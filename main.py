@@ -155,10 +155,10 @@ class TeleLookupApp:
         ui_update_interval = 0.5
         last_ui_update = 0.0
 
-        with open(file_path, "r", encoding="utf-8", errors="ignore", buffering=16 * 1024 * 1024) as f:
-            next(f)  # skip header
         with open(file_path, "rb") as fbin:
             with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                # skip header
+                mm.readline()
                 chunk = []
                 for idx, raw_line in enumerate(iter(mm.readline, b""), start=1):
                     line = raw_line.decode("utf-8", errors="ignore")
