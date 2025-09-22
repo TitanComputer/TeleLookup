@@ -110,15 +110,6 @@ class TeleLookupApp:
         except:
             return None
 
-    def matches(self, parsed, id_query, user_query, phone_query):
-        if id_query and id_query not in parsed["id"]:
-            return False
-        if user_query and user_query.lower() not in parsed["username"].lower():
-            return False
-        if phone_query and phone_query not in parsed["phone"]:
-            return False
-        return True
-
     # ---------- search ----------
     def search_file_streaming(self, id_query="", user_query="", phone_query="", results_placeholder=None):
         file_path = st.session_state.get("file_path", "")
@@ -193,6 +184,8 @@ class TeleLookupApp:
                         chunk = []
 
                         # --- UI updates ---
+                        # st.session_state["shared_state"]["last_action"] = time.time()
+                        # print(f"[DEBUG] Processed {idx}/{total_lines} lines, found {len(results_list)} matches")
                         now = time.time()
                         if now - last_ui_update >= ui_update_interval:
                             percent = min(int(idx / total_lines * 100), 100)
@@ -206,6 +199,7 @@ class TeleLookupApp:
                                 results_placeholder.dataframe(df, width="stretch")
                             progress_bar.progress(idx / total_lines)
                             last_ui_update = now
+                        # time.sleep(0)
 
                 # remaining lines
                 for l in chunk:
