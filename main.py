@@ -7,6 +7,8 @@ import threading
 import tkinter as tk
 from tkinter import filedialog
 
+APP_VERSION = "1.0.0"
+
 # ===== ایجاد shared_state در سطح global/script
 if "shared_state" not in st.session_state:
     st.session_state["shared_state"] = {"last_action": time.time()}
@@ -299,10 +301,10 @@ class TeleLookupApp:
         return file_path
 
     def run(self):
-        st.set_page_config(page_title="TeleLookup", layout="wide")
+        st.set_page_config(page_title=f"TeleLookup v{APP_VERSION}", layout="wide")
         header = st.container()
         with header:
-            st.title("📂 TeleLookup")
+            st.title(f"📂 TeleLookup v{APP_VERSION}")
 
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
