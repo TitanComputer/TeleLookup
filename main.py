@@ -6,6 +6,7 @@ import time
 import threading
 import tkinter as tk
 from tkinter import filedialog
+import mmap
 
 APP_VERSION = "1.0.0"
 
@@ -165,66 +166,64 @@ class TeleLookupApp:
 
         with open(file_path, "r", encoding="utf-8", errors="ignore", buffering=16 * 1024 * 1024) as f:
             next(f)  # skip header
-            chunk = []
-            for idx, line in enumerate(f, start=1):
-                t_io = time.time()
-                chunk.append(line)
-                io_time += time.time() - t_io
+        with open(file_path, "rb") as fbin:
+            with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                chunk = []
+                for idx, raw_line in enumerate(iter(mm.readline, b""), start=1):
+                    line = raw_line.decode("utf-8", errors="ignore")
+                    chunk.append(line)
 
-                if len(chunk) >= self.chunk_size:
-                    # process chunk
-                    for l in chunk:
-                        parsed = self.parse_line_fast(l)
-                        if parsed:
-                            username_lower = parsed["username"].lower()
-                            if id_q and id_q not in parsed["id"]:
-                                continue
-                            if user_q and user_q not in username_lower:
-                                continue
-                            if phone_q and phone_q not in parsed["phone"]:
-                                continue
-                            pid = parsed["id"]
-                            if pid not in seen_ids:
-                                seen_ids.add(pid)
-                                results_list.append(parsed)
-                    chunk = []
-                    # UI
-                    # st.session_state["shared_state"]["last_action"] = time.time()
-                    # print(f"[DEBUG] Processed {idx}/{total_lines} lines, found {len(results_list)} matches")
-                    now = time.time()
-                    if now - last_ui_update >= ui_update_interval:
-                        t_ui = time.time()
-                        percent = min(int(idx / total_lines * 100), 100)
-                        found_count = len(results_list)
-                        percent_text.text(f"Progress: {percent}%")
-                        elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
-                        found_text.text(f"Found: {found_count}")
-                        if results_list:
-                            t_df = time.time()
-                            df = pd.DataFrame.from_records(results_list)
-                            df.index = range(1, len(df) + 1)
-                            df_time += time.time() - t_df
-                            results_placeholder.dataframe(df, width="stretch")
-                        progress_bar.progress(idx / total_lines)
-                        ui_time += time.time() - t_ui
-                        last_ui_update = now
-                    # time.sleep(0)
+                    if len(chunk) >= self.chunk_size:
+                        append = results_list.append
+                        add = seen_ids.add
+                        for l in chunk:
+                            parsed = self.parse_line_fast(l)
+                            if parsed:
+                                username_lower = parsed["username"].lower()
+                                if id_q and id_q not in parsed["id"]:
+                                    continue
+                                if user_q and user_q not in username_lower:
+                                    continue
+                                if phone_q and phone_q not in parsed["phone"]:
+                                    continue
+                                pid = parsed["id"]
+                                if pid not in seen_ids:
+                                    add(pid)
+                                    append(parsed)
+                        chunk = []
 
-            # remaining lines
-            for l in chunk:
-                parsed = self.parse_line_fast(l)
-                if parsed:
-                    username_lower = parsed["username"].lower()
-                    if id_q and id_q not in parsed["id"]:
-                        continue
-                    if user_q and user_q not in username_lower:
-                        continue
-                    if phone_q and phone_q not in parsed["phone"]:
-                        continue
-                    pid = parsed["id"]
-                    if pid not in seen_ids:
-                        seen_ids.add(pid)
-                        results_list.append(parsed)
+                        # --- UI updates ---
+                        now = time.time()
+                        if now - last_ui_update >= ui_update_interval:
+                            percent = min(int(idx / total_lines * 100), 100)
+                            found_count = len(results_list)
+                            percent_text.text(f"Progress: {percent}%")
+                            elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
+                            found_text.text(f"Found: {found_count}")
+                            if results_list:
+                                df = pd.DataFrame.from_records(results_list)
+                                df.index = range(1, len(df) + 1)
+                                results_placeholder.dataframe(df, width="stretch")
+                            progress_bar.progress(idx / total_lines)
+                            last_ui_update = now
+
+                # remaining lines
+                for l in chunk:
+                    append = results_list.append
+                    add = seen_ids.add
+                    parsed = self.parse_line_fast(l)
+                    if parsed:
+                        username_lower = parsed["username"].lower()
+                        if id_q and id_q not in parsed["id"]:
+                            continue
+                        if user_q and user_q not in username_lower:
+                            continue
+                        if phone_q and phone_q not in parsed["phone"]:
+                            continue
+                        pid = parsed["id"]
+                        if pid not in seen_ids:
+                            add(pid)
+                            append(parsed)
 
         t_proc = time.time() - t_proc_start
 
