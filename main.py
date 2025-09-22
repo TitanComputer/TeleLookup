@@ -35,7 +35,10 @@ def get_shared_state():
 
 
 # ===== get shared state for this session
-shared_state = get_shared_state()
+@st.fragment()
+def cache_shared_state():
+    global shared_state
+    shared_state = get_shared_state()
 
 
 # ===== fragment برای keep-alive
@@ -46,6 +49,8 @@ def keep_alive_fragment():
 
 class TeleLookupApp:
     def __init__(self, idle_timeout=300, chunk_size=1000000):
+        cache_shared_state()
+        keep_alive_fragment()
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
 
@@ -182,7 +187,8 @@ class TeleLookupApp:
                                 results_list.append(parsed)
                     chunk = []
                     # UI
-                    st.session_state["shared_state"]["last_action"] = time.time()
+                    # st.session_state["shared_state"]["last_action"] = time.time()
+                    # print(f"[DEBUG] Processed {idx}/{total_lines} lines, found {len(results_list)} matches")
                     now = time.time()
                     if now - last_ui_update >= ui_update_interval:
                         t_ui = time.time()
@@ -200,7 +206,7 @@ class TeleLookupApp:
                         progress_bar.progress(idx / total_lines)
                         ui_time += time.time() - t_ui
                         last_ui_update = now
-                    time.sleep(0)
+                    # time.sleep(0)
 
             # remaining lines
             for l in chunk:
@@ -294,9 +300,9 @@ class TeleLookupApp:
 
     def run(self):
         st.set_page_config(page_title="TeleLookup", layout="wide")
-        keep_alive_fragment()
-
-        st.title("📂 TeleLookup")
+        header = st.container()
+        with header:
+            st.title("📂 TeleLookup")
 
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
