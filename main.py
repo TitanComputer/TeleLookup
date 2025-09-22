@@ -355,7 +355,12 @@ class TeleLookupApp:
 
             with left_col:
                 id_query = st.text_input(
-                    "🔎 ID", value="", key="id_search", max_chars=20, disabled=st.session_state["search_clicked"]
+                    "🔎 ID",
+                    value="",
+                    key="id_search",
+                    max_chars=20,
+                    disabled=st.session_state["search_clicked"],
+                    placeholder="Enter full or partial Telegram unique ID (e.g. 12345678)",
                 )
                 user_query = st.text_input(
                     "👤 Username",
@@ -363,9 +368,15 @@ class TeleLookupApp:
                     key="user_search",
                     max_chars=40,
                     disabled=st.session_state["search_clicked"],
+                    placeholder="Enter full or partial Telegram username (e.g. johndoe)",
                 )
                 phone_query = st.text_input(
-                    "📞 Phone", value="", key="phone_search", max_chars=20, disabled=st.session_state["search_clicked"]
+                    "📞 Phone",
+                    value="",
+                    key="phone_search",
+                    max_chars=20,
+                    disabled=st.session_state["search_clicked"],
+                    placeholder="Enter full or partial phone number. Format: 989xxxxxxxxx",
                 )
 
             # 🔹 جای نمایش نتایج (قبل از دکمه‌ها بسازیم که همیشه آماده باشه)
