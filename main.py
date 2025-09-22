@@ -132,6 +132,22 @@ class TeleLookupApp:
             with open(filename, "rb") as f:
                 return sum(buf.count(b"\n") for buf in iter(lambda: f.read(1024 * 1024), b""))
 
+        def process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list):
+            for line in chunk:
+                parsed = parse_line(line)
+                if not parsed:
+                    continue
+                if id_q and id_q not in parsed["id"]:
+                    continue
+                if user_q and user_q not in parsed["username"].lower():
+                    continue
+                if phone_q and phone_q not in parsed["phone"]:
+                    continue
+                pid = parsed["id"]
+                if pid not in seen_ids:
+                    add(pid)
+                    append(parsed)
+
         t_count_start = time.time()
         if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
             total_lines = count_lines_fast(file_path)
@@ -155,35 +171,18 @@ class TeleLookupApp:
         ui_update_interval = 0.5
         last_ui_update = 0.0
 
+        append = results_list.append
+        add = seen_ids.add
+        parse_line = self.parse_line_fast
         with open(file_path, "rb") as fbin:
             with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-                # skip header
-                mm.readline()
+                mm.readline()  # skip header
                 chunk = []
                 for idx, raw_line in enumerate(iter(mm.readline, b""), start=1):
-                    line = raw_line.decode("utf-8", errors="ignore")
-                    chunk.append(line)
-
+                    chunk.append(raw_line.decode("utf-8", errors="ignore"))
                     if len(chunk) >= self.chunk_size:
-                        append = results_list.append
-                        add = seen_ids.add
-                        parse_line = self.parse_line_fast
-                        for l in chunk:
-                            parsed = parse_line(l)
-                            if parsed:
-                                username_lower = parsed["username"].lower()
-                                if id_q and id_q not in parsed["id"]:
-                                    continue
-                                if user_q and user_q not in username_lower:
-                                    continue
-                                if phone_q and phone_q not in parsed["phone"]:
-                                    continue
-                                pid = parsed["id"]
-                                if pid not in seen_ids:
-                                    add(pid)
-                                    append(parsed)
-                        chunk = []
-
+                        process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
+                        chunk.clear()
                         # --- UI updates ---
                         # st.session_state["shared_state"]["last_action"] = time.time()
                         # print(f"[DEBUG] Processed {idx}/{total_lines} lines, found {len(results_list)} matches")
@@ -202,24 +201,8 @@ class TeleLookupApp:
                             last_ui_update = now
                         # time.sleep(0)
 
-                # remaining lines
-                parsed = self.parse_line_fast(l)
-                for l in chunk:
-                    append = results_list.append
-                    add = seen_ids.add
-                    parsed = parse_line(l)
-                    if parsed:
-                        username_lower = parsed["username"].lower()
-                        if id_q and id_q not in parsed["id"]:
-                            continue
-                        if user_q and user_q not in username_lower:
-                            continue
-                        if phone_q and phone_q not in parsed["phone"]:
-                            continue
-                        pid = parsed["id"]
-                        if pid not in seen_ids:
-                            add(pid)
-                            append(parsed)
+                if chunk:
+                    process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
 
         t_proc = time.time() - t_proc_start
 
