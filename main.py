@@ -181,8 +181,9 @@ class TeleLookupApp:
             with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                 mm.readline()  # skip header
                 chunk = []
+                stop_search = st.session_state.get("stop_search", False)
                 for idx, raw_line in enumerate(iter(mm.readline, b""), start=1):
-                    if st.session_state.get("stop_search", False):
+                    if stop_search:
                         # flush current chunk to keep partial results
                         if chunk:
                             process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
@@ -411,7 +412,6 @@ class TeleLookupApp:
                     if not st.session_state["search_clicked"]:
                         # حالت عادی → دکمه Search
                         if st.button("🚀 Search"):
-                            # self.reset()
                             results_placeholder.empty()
                             st.session_state["results"] = pd.DataFrame()
                             st.session_state["no_results_found"] = False
