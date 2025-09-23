@@ -119,7 +119,10 @@ class TeleLookupApp:
             st.warning("No file loaded.")
             return
 
-        total_start = time.time()
+        if "total_start" not in st.session_state:
+            st.session_state["total_start"] = time.time()
+
+        total_start = st.session_state["total_start"]
         results_list = []
         seen_ids = set()
 
@@ -288,6 +291,7 @@ class TeleLookupApp:
         st.session_state.pop("final_results", None)
         st.session_state.pop("final_elapsed", None)
         st.session_state.pop("final_found", None)
+        st.session_state.pop("total_start", None)
 
         self.update_last_action()
 
@@ -413,6 +417,7 @@ class TeleLookupApp:
                         # حالت عادی → دکمه Search
                         if st.button("🚀 Search"):
                             results_placeholder.empty()
+                            st.session_state.pop("total_start", None)
                             st.session_state["results"] = pd.DataFrame()
                             st.session_state["no_results_found"] = False
                             st.session_state["search_clicked"] = True
@@ -438,12 +443,11 @@ class TeleLookupApp:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
 
                 if st.session_state.get("stop_search", False):
-                    # اگر جستجو متوقف شده باشه، اطلاعات تا اون لحظه رو نشون بده
-                    st.progress(st.session_state.get("final_progress", 0) / 100)
-                    st.write(f"Search stopped by user.")
-                    st.write(f"{st.session_state.get('final_elapsed', '0.0')}")
+                    elapsed = time.time() - st.session_state["total_start"]  # زمان سپری‌شده تا لحظه استپ
+                    st.progress(min(st.session_state.get("final_progress", 0) / 100, 1.0))
+                    st.write("Search stopped by user.")
+                    st.write(f"Elapsed: {elapsed:.1f} sec")  # نمایش زمان سپری‌شده
                     st.write(f"Found so far: {len(st.session_state.get('results', []))}")
-                    print(1)
                 else:
                     # اگر جستجو هنوز ادامه داره، اطلاعات جدید رو نشون بده
                     if "final_results" in st.session_state:
@@ -451,7 +455,6 @@ class TeleLookupApp:
                         st.write("Progress: 100%")
                         st.write(st.session_state["final_elapsed"])
                         st.write(st.session_state["final_found"])
-                        print(0)
 
 
 if __name__ == "__main__":
