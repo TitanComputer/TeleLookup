@@ -71,6 +71,8 @@ class TeleLookupApp:
             st.session_state["show_search_ui"] = False
         if "no_results_found" not in st.session_state:
             st.session_state["no_results_found"] = False
+        if "stop_search" not in st.session_state:
+            st.session_state["stop_search"] = False
 
     # ---------- utility ----------
     def update_last_action(self):
@@ -174,11 +176,20 @@ class TeleLookupApp:
         append = results_list.append
         add = seen_ids.add
         parse_line = self.parse_line_fast
+        stopped = False
         with open(file_path, "rb") as fbin:
             with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                 mm.readline()  # skip header
                 chunk = []
                 for idx, raw_line in enumerate(iter(mm.readline, b""), start=1):
+                    if st.session_state.get("stop_search", False):
+                        # flush current chunk to keep partial results
+                        if chunk:
+                            process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
+                            chunk.clear()
+                        stopped = True
+                        print("[INFO] Search stopped by user at line", idx)
+                        break
                     chunk.append(raw_line.decode("utf-8", errors="ignore"))
                     if len(chunk) >= self.chunk_size:
                         process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
@@ -189,28 +200,36 @@ class TeleLookupApp:
                         now = time.time()
                         if now - last_ui_update >= ui_update_interval:
                             percent = min(int(idx / total_lines * 100), 100)
-                            found_count = len(results_list)
                             percent_text.text(f"Progress: {percent}%")
                             elapsed_text.text(f"Elapsed: {time.time()-total_start:.1f}s")
-                            found_text.text(f"Found: {found_count}")
+                            found_text.text(f"Found: {len(results_list)}")
                             if results_list:
                                 df = pd.DataFrame.from_records(results_list)
                                 df.index = range(1, len(df) + 1)
                                 results_placeholder.dataframe(df, width="stretch")
+                                st.session_state["results"] = df
+                                st.session_state["no_results_found"] = False
                             progress_bar.progress(idx / total_lines)
                             last_ui_update = now
                         # time.sleep(0)
 
-                if chunk:
+                # if loop finished normally, process remaining chunk
+                if not stopped and chunk:
                     process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list)
+                    chunk.clear()
 
         t_proc = time.time() - t_proc_start
 
-        # finalize
-        progress_bar.progress(1.0)
-        percent_text.text("Progress: 100%")
+        # finalize display/state
+        if stopped:
+            percent_text.text("Search stopped by user.")
+            found_text.text(f"Found so far: {len(results_list)}")
+        else:
+            progress_bar.progress(1.0)
+            percent_text.text("Progress: 100%")
+            found_text.text(f"Found: {len(results_list)}")
+
         elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
-        found_text.text(f"Found: {found_count}")
 
         if results_list:
             t_df = time.time()
@@ -222,10 +241,21 @@ class TeleLookupApp:
             st.session_state["no_results_found"] = False
             results_placeholder.dataframe(df, width="stretch")
         else:
-            # هیچ نتیجه‌ای پیدا نشده
-            st.session_state["results"] = pd.DataFrame()
-            st.session_state["no_results_found"] = True
-            results_placeholder.info("No results found")
+            # no results produced by THIS search
+            if stopped:
+                # if there are previous results in session, keep them and just inform user
+                prev = st.session_state.get("results", pd.DataFrame())
+                if not prev.empty:
+                    st.info("Search stopped — no new results found. Showing previous results.")
+                else:
+                    st.session_state["results"] = pd.DataFrame()
+                    st.session_state["no_results_found"] = True
+                    results_placeholder.info("No results found")
+            else:
+                # هیچ نتیجه‌ای پیدا نشده
+                st.session_state["results"] = pd.DataFrame()
+                st.session_state["no_results_found"] = True
+                results_placeholder.info("No results found")
 
         # timings
         print(f"[DETAIL] I/O read took {io_time:.2f} sec")
@@ -241,6 +271,7 @@ class TeleLookupApp:
         )
 
         st.session_state["search_clicked"] = False
+        st.session_state["stop_search"] = False
         st.session_state["final_results"] = st.session_state["results"]
         st.session_state["final_progress"] = 100
         st.session_state["final_elapsed"] = f"Elapsed time: {time.time()-total_start:.1f} sec"
@@ -375,16 +406,21 @@ class TeleLookupApp:
                 # سه ستون برای سه دکمه در یک ردیف
                 btn1, btn2, btn3 = st.columns([1, 1, 1])
 
-                # st.session_state["search_clicked"] = False  # فلگ برای تشخیص کلیک سرچ
                 with btn1:
-                    if st.button("🚀 Search"):
-                        # پاک کردن نتایج قبلی بلافاصله
-                        st.session_state["results"] = pd.DataFrame()
-                        st.session_state["no_results_found"] = False
-                        # شروع سرچ
-                        st.session_state["search_clicked"] = True
-                        # ری‌ران تا disabled شدن اینپوت‌ها و وضعیت دکمه‌ها اعمال بشه
-                        st.rerun()
+                    if not st.session_state["search_clicked"]:
+                        # حالت عادی → دکمه Search
+                        if st.button("🚀 Search"):
+                            self.reset()
+                            results_placeholder.empty()
+                            st.session_state["results"] = pd.DataFrame()
+                            st.session_state["no_results_found"] = False
+                            st.session_state["search_clicked"] = True
+                            st.session_state["stop_search"] = False
+                            st.rerun()
+                    else:
+                        # حالت وقتی سرچ در حال اجراست → دکمه Stop
+                        if st.button("🛑 Stop"):
+                            st.session_state["stop_search"] = True
 
                 with btn2:
                     if st.button("🔄 Reset", disabled=st.session_state["search_clicked"]):
