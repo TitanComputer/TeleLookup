@@ -69,8 +69,7 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --python-flag=no_site,no_asserts,no_docstrings \
-            --onefile \
-            --standalone \
+
             --msvc=latest \
             --assume-yes-for-downloads \
             --output-filename=TeleLookup \
