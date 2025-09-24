@@ -225,15 +225,15 @@ class TeleLookupApp:
         t_proc = time.time() - t_proc_start
 
         # finalize display/state
-        if stopped:
-            percent_text.text("Search stopped by user.")
-            found_text.text(f"Found so far: {len(results_list)}")
-        else:
-            # progress_bar.progress(1.0)
-            percent_text.text("Progress: 100%")
-            found_text.text(f"Found: {len(results_list)}")
+        # if stopped:
+        #     percent_text.text("Search stopped by user.")
+        #     found_text.text(f"Found so far: {len(results_list)}")
+        # else:
+        #     # progress_bar.progress(1.0)
+        #     percent_text.text("Progress: 100%")
+        #     found_text.text(f"Found: {len(results_list)}")
 
-        elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
+        # elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
 
         if results_list:
             t_df = time.time()
@@ -420,8 +420,8 @@ class TeleLookupApp:
                             st.session_state.pop("total_start", None)
                             st.session_state["results"] = pd.DataFrame()
                             st.session_state["no_results_found"] = False
-                            st.session_state["search_clicked"] = True
                             st.session_state["stop_search"] = False
+                            st.session_state["search_clicked"] = True
                             st.rerun()
                     else:
                         # حالت وقتی سرچ در حال اجراست → دکمه Stop
