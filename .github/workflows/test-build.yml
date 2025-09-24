@@ -54,6 +54,52 @@ jobs:
           Copy-Item "$env:RUNNER_TEMP\upx\upx-$UPX_VERSION-win64\upx.exe" $dst -Force
           echo "UPX_BIN=$dst" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Patch Nuitka standard package config to remove streamlit anti-bloat entry
+        shell: bash
+        run: |
+          # find the installed standard config path
+          CONFIG_PATH=$(python - <<'PY'
+import os, nuitka
+print(os.path.join(os.path.dirname(nuitka.__file__), "plugins", "standard", "standard.nuitka-package.config.yml"))
+PY
+)
+          echo "Nuitka standard package config: $CONFIG_PATH"
+          # backup (just in case)
+          cp "$CONFIG_PATH" "${CONFIG_PATH}.bak"
+          echo "backup written to ${CONFIG_PATH}.bak"
+
+          # produce a patched version: remove the whole entry whose module-name mentions cache_utils
+          python - "$CONFIG_PATH" <<'PY'
+import sys
+p = sys.argv[1]
+with open(p, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+out = []
+i = 0
+while i < len(lines):
+    line = lines[i]
+    stripped = line.lstrip()
+    # detect top-level module-name entry; robust to quotes and spaces
+    if stripped.startswith("- module-name:") and "streamlit.runtime.caching.cache_utils" in stripped:
+        # skip this block until the next top-level '- module-name:' or EOF
+        i += 1
+        while i < len(lines) and not lines[i].lstrip().startswith("- module-name:"):
+            i += 1
+        # continue without appending skipped block
+        continue
+    out.append(line)
+    i += 1
+
+with open(p + ".patched", "w", encoding="utf-8") as f:
+    f.writelines(out)
+print("patched ->", p + ".patched")
+PY
+          # overwrite original with patched
+          mv "${CONFIG_PATH}.patched" "$CONFIG_PATH"
+          echo "Patched standard config in-place."
+
+
       - name: Build with Nuitka + UPX
         shell: bash
         run: |
