@@ -64,7 +64,9 @@ jobs:
             --enable-plugin=multiprocessing \
             --lto=yes \
             --enable-plugin=tk-inter \
-            --user-package-configuration-file=.github/workflows/streamlit.nuitka-package.config.yml \
+            --show-anti-bloat-changes \
+            --show-source-changes \
+            --user-package-configuration-file=.github/streamlit.nuitka-package.config.yml \
             --windows-console-mode=disable \
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
