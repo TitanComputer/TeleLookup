@@ -113,8 +113,6 @@ jobs:
             --debug \
             --enable-plugin=tk-inter \
             --show-anti-bloat-changes \
-            --show-source-changes=streamlit.runtime.caching.cache_utils \
-            --user-package-configuration-file=.github/streamlit.nuitka-package.config.yml \
             --windows-console-mode=disable \
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
