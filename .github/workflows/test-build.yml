@@ -64,8 +64,8 @@ jobs:
             --enable-plugin=multiprocessing \
             --lto=yes \
             --enable-plugin=tk-inter \
-            --show-anti-bloat-changes=streamlit.runtime.caching.cache_utils \
-            --show-source-changes \
+            --show-anti-bloat-changes \
+            --show-source-changes=streamlit.runtime.caching.cache_utils \
             --user-package-configuration-file=.github/streamlit.nuitka-package.config.yml \
             --windows-console-mode=disable \
             --follow-imports \
