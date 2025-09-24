@@ -63,6 +63,8 @@ jobs:
             --upx-binary="$UPX_BIN" \
             --enable-plugin=multiprocessing \
             --lto=yes \
+            --trace-execution \
+            --debug \
             --enable-plugin=tk-inter \
             --show-anti-bloat-changes \
             --show-source-changes=streamlit.runtime.caching.cache_utils \
