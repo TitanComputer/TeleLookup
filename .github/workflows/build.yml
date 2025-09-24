@@ -1,0 +1,106 @@
+name: Build (Nuitka + UPX)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create GitHub Release?'
+        required: true
+        default: 'false'
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check files
+        run: dir assets
+
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+
+      - name: Install Nuitka and deps
+        shell: powershell
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U nuitka zstandard ordered-set
+          if (Test-Path "requirements.txt") { pip install -r requirements.txt }
+          python -V
+          python -m nuitka --version
+
+      - name: Download UPX
+        shell: powershell
+        run: |
+          $UPX_VERSION = "5.0.2"
+          $zip = "$env:RUNNER_TEMP\upx.zip"
+          $dst = "C:\UPX"
+          Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v$UPX_VERSION/upx-$UPX_VERSION-win64.zip" -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath "$env:RUNNER_TEMP\upx" -Force
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\upx\upx-$UPX_VERSION-win64\upx.exe" $dst -Force
+          echo "UPX_BIN=$dst" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build with Nuitka + UPX
+        shell: bash
+        run: |
+          python -m nuitka \
+            --jobs=4 \
+            --enable-plugin=upx \
+            --upx-binary="$UPX_BIN" \
+            --enable-plugin=multiprocessing \
+            --lto=yes \
+            --enable-plugin=tk-inter \
+            --windows-console-mode=disable \
+            --follow-imports \
+            --windows-icon-from-ico="assets/icon.png" \
+            --include-data-dir=assets=assets \
+            --python-flag=no_site,no_asserts,no_docstrings \
+            --onefile \
+            --standalone \
+            --msvc=latest \
+            --assume-yes-for-downloads \
+            --output-filename=TeleLookup \
+            main.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeleLookup
+          path: TeleLookup.exe
+
+      - name: Read APP_VERSION from main.py
+        id: get_version
+        run: |
+          $version = Select-String -Path main.py -Pattern '^APP_VERSION\s*=\s*"(.*)"' | ForEach-Object { $_.Matches[0].Groups[1].Value }
+          echo "version=$version" >> $env:GITHUB_ENV
+
+      - name: Debug Version
+        run: echo "Version is $env:version"
+        shell: pwsh
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: github.event.inputs.release == 'true' || startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.version }}
+          name: v${{ env.version }}
+          draft: false
+          prerelease: false
+          files: TeleLookup.exe
