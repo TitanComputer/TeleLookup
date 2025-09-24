@@ -99,6 +99,9 @@ jobs:
                     mv "${CONFIG_PATH}.patched" "$CONFIG_PATH"
                     echo "Patched standard config in-place."
 
+      - name: Suppress MSVC warning C4102
+        run: echo "CL=/wd4102" >> $env:GITHUB_ENV
+        shell: pwsh
 
       - name: Build with Nuitka + UPX
         shell: bash
