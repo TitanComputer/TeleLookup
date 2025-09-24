@@ -1,4 +1,3 @@
 ---
-- module-name: 'streamlit.runtime.caching.cache_utils'
-  # no anti-bloat changes for this module (empty list)
-  anti-bloat: []
+- module-name: "streamlit.runtime.caching.cache_utils"
+  anti-bloat: null
