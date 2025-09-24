@@ -114,7 +114,6 @@ jobs:
             --show-anti-bloat-changes \
             --windows-console-mode=disable \
             --follow-imports \
-            --disable-c11-warnings \
             --msvc-no-warnings \
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
