@@ -64,12 +64,12 @@ jobs:
             --enable-plugin=multiprocessing \
             --lto=yes \
             --enable-plugin=tk-inter \
-            --enable-plugin=anti-bloat \
+            --anti-bloat \
             --windows-console-mode=disable \
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
-            --python-flag=no_site,no_asserts,no_docstrings,no-auto-follow \
+            --python-flag=no_site,no_asserts,no_docstrings \
             --onefile \
             --standalone \
             --msvc=latest \
