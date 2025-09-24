@@ -65,6 +65,7 @@ jobs:
             --lto=yes \
             --enable-plugin=tk-inter \
             --enable-plugin=anti-bloat \
+            --no-auto-follow \
             --windows-console-mode=disable \
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
