@@ -57,7 +57,7 @@ class TeleLookupApp:
         keep_alive_fragment()
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
-        self.icon_path = os.path.join("assets", "icon.png")
+        self.icon_path = self.resource_path(os.path.join("assets", "icon.png"))
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -75,6 +75,13 @@ class TeleLookupApp:
             st.session_state["no_results_found"] = False
         if "stop_search" not in st.session_state:
             st.session_state["stop_search"] = False
+
+    def resource_path(self, relative_path):
+        """Returns the absolute path to a file in the same directory as the script.
+        This is used to find resources like images when the script is run from a
+        different directory (e.g. as an executable)."""
+        temp_dir = os.path.dirname(__file__)
+        return os.path.join(temp_dir, relative_path)
 
     # ---------- utility ----------
     def update_last_action(self):
