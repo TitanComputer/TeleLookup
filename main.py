@@ -57,6 +57,7 @@ class TeleLookupApp:
         keep_alive_fragment()
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
+        self.icon_path = os.path.join("assets", "icon.png")
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -317,12 +318,15 @@ class TeleLookupApp:
         return file_path
 
     def run(self):
-        st.set_page_config(
-            page_title=f"TeleLookup v{APP_VERSION}", layout="wide", page_icon=os.path.join("assets", "icon.png")
-        )
+        st.set_page_config(page_title=f"TeleLookup v{APP_VERSION}", layout="wide", page_icon=self.icon_path)
         header = st.container()
         with header:
-            st.title(f"📂 TeleLookup v{APP_VERSION}")
+            col1, col2 = st.columns([1, 15])
+            with col1:
+                st.image(self.icon_path, width=96)  # اندازه آیکون
+            with col2:
+                st.title(f"TeleLookup v{APP_VERSION}")
+            # st.title(f"📂 TeleLookup v{APP_VERSION}")
 
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
@@ -338,6 +342,7 @@ class TeleLookupApp:
                 # فاصله برای هم‌تراز شدن با text_input
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                 searchbtn, exitbtn = st.columns([1, 1])
+
                 with searchbtn:
                     if st.button(
                         "📁 Browse File", disabled=st.session_state.get("show_search_ui", False), key="browse_btn"
