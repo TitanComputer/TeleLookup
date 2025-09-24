@@ -74,7 +74,15 @@ jobs:
             --msvc=latest \
             --assume-yes-for-downloads \
             --output-filename=TeleLookup \
+            --enable-plugin=report \
             main.py
+            
+      - name: Upload Nuitka crash report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuitka-crash-report
+          path: nuitka-crash-report.xml
+        if: failure()  # فقط زمانی که خطا رخ بده این artifact آپلود میشه
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
