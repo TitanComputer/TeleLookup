@@ -7,7 +7,6 @@ import threading
 import tkinter as tk
 from tkinter import filedialog
 import mmap
-import sys
 
 APP_VERSION = "1.0.0"
 
@@ -478,10 +477,5 @@ class TeleLookupApp:
 
 
 if __name__ == "__main__":
-    # بررسی اینکه آیا در حال اجرا به عنوان یک برنامه Streamlit هستیم یا نه
-    if "streamlit" in sys.argv:
-        os.system("streamlit run main.py")
-    else:
-        # در صورتی که برنامه به طور عادی اجرا بشه
-        app = TeleLookupApp()
-        app.run()
+    app = TeleLookupApp()
+    app.run()
