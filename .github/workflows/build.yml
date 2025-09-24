@@ -64,7 +64,6 @@ jobs:
             --enable-plugin=multiprocessing \
             --lto=yes \
             --enable-plugin=tk-inter \
-            --anti-bloat \
             --windows-console-mode=disable \
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
@@ -82,7 +81,7 @@ jobs:
         with:
           name: nuitka-crash-report
           path: nuitka-crash-report.xml
-        if: failure()  # فقط زمانی که خطا رخ بده این artifact آپلود میشه
+        if: failure()
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
