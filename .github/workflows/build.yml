@@ -71,6 +71,7 @@ jobs:
             --include-data-files=main.py=main.py \
             --include-data-dir=$(python -c "import streamlit, os; print(os.path.join(os.path.dirname(streamlit.__file__), 'static'))")=streamlit/static \
             --no-deployment-flag=self-execution \
+            --onefile \
             --standalone \
             --msvc=latest \
             --assume-yes-for-downloads \
