@@ -3,6 +3,7 @@ import os
 from streamlit.web import cli as stcli
 
 if __name__ == "__main__":
+    os.environ["STREAMLIT_DEVELOPMENT_MODE"] = "false"
     main_path = os.path.join(os.path.dirname(__file__), "main.py")
     sys.argv = [
         "streamlit",
