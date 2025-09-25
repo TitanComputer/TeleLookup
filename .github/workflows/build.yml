@@ -69,6 +69,7 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
+            --no-deployment-flag=self-execution \
             --onefile \
             --standalone \
             --msvc=latest \
