@@ -69,8 +69,8 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
+            --include-data-dir=venv/Lib/site-packages/streamlit/static=streamlit/static \
             --no-deployment-flag=self-execution \
-            --onefile \
             --standalone \
             --msvc=latest \
             --assume-yes-for-downloads \
