@@ -1,4 +1,4 @@
-name: Test Build (Nuitka + UPX)
+name: Debug Test Build (Nuitka + UPX)
 
 on:
   workflow_dispatch:
