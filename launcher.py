@@ -1,16 +1,18 @@
-import sys
 import os
-from streamlit.web import cli as stcli
+from streamlit.web import bootstrap
 
 if __name__ == "__main__":
+    # مسیر فایل اصلی برنامه
     main_path = os.path.join(os.path.dirname(__file__), "main.py")
-    sys.argv = [
-        "streamlit",
-        "run",
-        main_path,
-        "--global.developmentMode=false",
-        "--server.port=8501",
-        "--server.enableCORS=false",
-        "--server.enableXsrfProtection=false",
-    ]
-    sys.exit(stcli.main())
+
+    # اینجا تنظیمات سرور رو مستقیماً پاس می‌دی
+    bootstrap.load_config_options(
+        flag_options={
+            "server.port": 8501,
+            "server.enableCORS": False,
+            "server.enableXsrfProtection": False,
+            "global.developmentMode": False,  # کلید اصلی
+        }
+    )
+
+    bootstrap.run(main_path, "", [], flag_options={})
