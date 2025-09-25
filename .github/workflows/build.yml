@@ -68,6 +68,7 @@ jobs:
             --follow-imports \
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
+            --include-data-files=main.py=main.py \
             --onefile \
             --standalone \
             --msvc=latest \
