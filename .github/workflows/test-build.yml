@@ -85,7 +85,6 @@ jobs:
             --include-module=click \
             --include-module=colorama \
             --include-module=gitdb \
-            --include-module=GitPython \
             --include-module=idna \
             --include-module=Jinja2 \
             --include-module=jsonschema \
