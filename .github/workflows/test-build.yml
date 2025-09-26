@@ -93,7 +93,6 @@ jobs:
             --include-module=pip \
             --include-module=pyarrow \
             --include-module=pydeck \
-            --include-module=python-dateutil \
             --include-module=pytz \
             --include-module=referencing \
             --include-module=requests \
