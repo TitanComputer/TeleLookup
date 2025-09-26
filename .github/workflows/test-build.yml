@@ -90,7 +90,6 @@ jobs:
             --include-module=numpy \
             --include-module=packaging \
             --include-module=pandas \
-            --include-module=pillow \
             --include-module=pip \
             --include-module=protobuf \
             --include-module=pyarrow \
