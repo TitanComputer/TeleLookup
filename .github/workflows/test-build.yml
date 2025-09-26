@@ -74,6 +74,9 @@ jobs:
             --include-package=streamlit \
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
+            --include-module=tkinter.filedialog \
+            --include-module=tkinter.simpledialog \
+            --include-module=tkinter.messagebox \
             --no-deployment-flag=self-execution \
             --standalone \
             --onefile \
