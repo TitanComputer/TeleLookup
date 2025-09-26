@@ -82,7 +82,6 @@ jobs:
             --include-module=blinker \
             --include-module=cachetools \
             --include-module=certifi \
-            --include-module=charset-normalizer \
             --include-module=click \
             --include-module=colorama \
             --include-module=gitdb \
