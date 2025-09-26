@@ -91,7 +91,6 @@ jobs:
             --include-module=packaging \
             --include-module=pandas \
             --include-module=pip \
-            --include-module=protobuf \
             --include-module=pyarrow \
             --include-module=pydeck \
             --include-module=python-dateutil \
