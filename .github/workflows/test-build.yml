@@ -87,7 +87,6 @@ jobs:
             --include-module=gitdb \
             --include-module=idna \
             --include-module=jsonschema \
-            --include-module=jsonschema-specifications \
             --include-module=MarkupSafe \
             --include-module=narwhals \
             --include-module=numpy \
