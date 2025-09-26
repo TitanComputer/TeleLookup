@@ -96,7 +96,6 @@ jobs:
             --include-module=pytz \
             --include-module=referencing \
             --include-module=requests \
-            --include-module=rpds-py \
             --include-module=six \
             --include-module=smmap \
             --include-module=tenacity \
