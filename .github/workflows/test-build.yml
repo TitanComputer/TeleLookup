@@ -70,7 +70,6 @@ jobs:
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
             --include-data-dir=$(python -c "import streamlit, os; print(os.path.dirname(streamlit.__file__))")=streamlit \
-            --include-data-dir=$(python -c "import streamlit, os; print(os.path.join(os.path.dirname(streamlit.__file__), 'runtime'))")=streamlit/runtime \
             --include-package=streamlit \
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
@@ -87,7 +86,6 @@ jobs:
             --include-module=gitdb \
             --include-module=idna \
             --include-module=jsonschema \
-            --include-module=MarkupSafe \
             --include-module=narwhals \
             --include-module=numpy \
             --include-module=packaging \
