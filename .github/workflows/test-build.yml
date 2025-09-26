@@ -69,6 +69,8 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
+            --include-data-dir=$(python -c "import streamlit, os; print(os.path.dirname(streamlit.__file__))")=streamlit \
+            --include-data-dir=$(python -c "import streamlit, os; print(os.path.join(os.path.dirname(streamlit.__file__), 'runtime'))")=streamlit/runtime \
             --include-package=streamlit \
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
