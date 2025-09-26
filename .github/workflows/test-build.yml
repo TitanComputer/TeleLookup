@@ -86,7 +86,6 @@ jobs:
             --include-module=colorama \
             --include-module=gitdb \
             --include-module=idna \
-            --include-module=Jinja2 \
             --include-module=jsonschema \
             --include-module=jsonschema-specifications \
             --include-module=MarkupSafe \
