@@ -108,7 +108,6 @@ jobs:
             --no-deployment-flag=self-execution \
             --standalone \
             --onefile \
-            --onefile-windows-splash-screen-image=assets/icon.png \
             --windows-console-mode=disable \
             --msvc=latest \
             --assume-yes-for-downloads \
