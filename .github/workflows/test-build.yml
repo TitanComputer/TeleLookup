@@ -74,8 +74,6 @@ jobs:
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
             --include-module=tkinter.filedialog \
-            --include-module=tkinter.simpledialog \
-            --include-module=tkinter.messagebox \
             --include-module=altair \
             --include-module=attrs \
             --include-module=blinker \
