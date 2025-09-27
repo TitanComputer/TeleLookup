@@ -69,6 +69,7 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
+            --include-data-dir=$(python -c "import streamlit, os; print(os.path.dirname(streamlit.__file__))")=streamlit \
             --include-package=streamlit \
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
@@ -107,15 +108,17 @@ jobs:
             --no-deployment-flag=self-execution \
             --standalone \
             --onefile \
+            --onefile-windows-splash-screen-image=assets/icon.png \
+            --windows-console-mode=disable \
             --msvc=latest \
             --assume-yes-for-downloads \
             --output-filename=TeleLookup \
             launcher.py
             
-      - name: Upload Nuitka crash report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuitka-crash-report
+            - name: Upload Nuitka crash report artifact
+            uses: actions/upload-artifact@v4
+            with:
+              name: nuitka-crash-report
           path: nuitka-crash-report.xml
         if: failure()
 
