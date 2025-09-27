@@ -74,6 +74,7 @@ jobs:
             --include-package=streamlit.runtime \
             --include-package=streamlit.runtime.scriptrunner \
             --include-module=core \
+            --include-module=streamlit \
             --include-module=tkinter.filedialog \
             --include-module=altair \
             --include-module=attrs \
