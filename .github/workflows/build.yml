@@ -1,4 +1,4 @@
-name: Build (Nuitka + UPX)
+name: Test Build (Nuitka + UPX)
 
 on:
   workflow_dispatch:
@@ -69,10 +69,44 @@ jobs:
             --windows-icon-from-ico="assets/icon.png" \
             --include-data-dir=assets=assets \
             --include-data-files=main.py=main.py \
+            --include-data-dir=$(python -c "import streamlit, os; print(os.path.dirname(streamlit.__file__))")=streamlit \
             --include-package=streamlit \
+            --include-package=streamlit.runtime \
+            --include-package=streamlit.runtime.scriptrunner \
+            --include-module=core \
+            --include-module=tkinter.filedialog \
+            --include-module=altair \
+            --include-module=attrs \
+            --include-module=blinker \
+            --include-module=cachetools \
+            --include-module=certifi \
+            --include-module=click \
+            --include-module=colorama \
+            --include-module=gitdb \
+            --include-module=idna \
+            --include-module=jsonschema \
+            --include-module=narwhals \
+            --include-module=numpy \
+            --include-module=packaging \
+            --include-module=pandas \
+            --include-module=pip \
+            --include-module=pyarrow \
+            --include-module=pydeck \
+            --include-module=pytz \
+            --include-module=referencing \
+            --include-module=requests \
+            --include-module=six \
+            --include-module=smmap \
+            --include-module=tenacity \
+            --include-module=toml \
+            --include-module=tornado \
+            --include-module=typing_extensions \
+            --include-module=tzdata \
+            --include-module=urllib3 \
+            --include-module=watchdog \
             --no-deployment-flag=self-execution \
-            --onefile \
             --standalone \
+            --onefile \
             --msvc=latest \
             --assume-yes-for-downloads \
             --output-filename=TeleLookup \
