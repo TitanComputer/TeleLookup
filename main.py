@@ -1,7 +1,7 @@
 import streamlit as st
 from core import *
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 # ===== ایجاد shared_state در سطح global/script
 if "shared_state" not in st.session_state:
