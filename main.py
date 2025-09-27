@@ -7,6 +7,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog
 import mmap
+from core import *
 
 APP_VERSION = "1.0.0"
 
@@ -139,27 +140,6 @@ class TeleLookupApp:
         percent_text = st.empty()
         elapsed_text = st.empty()
         found_text = st.empty()
-
-        # ---------- count total lines ----------
-        def count_lines_fast(filename):
-            with open(filename, "rb") as f:
-                return sum(buf.count(b"\n") for buf in iter(lambda: f.read(1024 * 1024), b""))
-
-        def process_chunk(chunk, parse_line, append, add, id_q, user_q, phone_q, seen_ids, results_list):
-            for line in chunk:
-                parsed = parse_line(line)
-                if not parsed:
-                    continue
-                if id_q and id_q not in parsed["id"]:
-                    continue
-                if user_q and user_q not in parsed["username"].lower():
-                    continue
-                if phone_q and phone_q not in parsed["phone"]:
-                    continue
-                pid = parsed["id"]
-                if pid not in seen_ids:
-                    add(pid)
-                    append(parsed)
 
         t_count_start = time.time()
         if "total_lines" not in st.session_state or st.session_state.get("file_path_cached") != file_path:
