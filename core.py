@@ -1,7 +1,57 @@
+import os
+import pandas as pd
+import signal
+import time
+import threading
+import tkinter as tk
+from tkinter import filedialog
+import mmap
+
+
+def resource_path(relative_path):
+    """Returns the absolute path to a file in the same directory as the script.
+    This is used to find resources like images when the script is run from a
+    different directory (e.g. as an executable)."""
+    temp_dir = os.path.dirname(__file__)
+    return os.path.join(temp_dir, relative_path)
+
+
 # ---------- count total lines ----------
 def count_lines_fast(filename):
     with open(filename, "rb") as f:
         return sum(buf.count(b"\n") for buf in iter(lambda: f.read(1024 * 1024), b""))
+
+
+# ---------- parse line ----------
+def parse_line_fast(line: str):
+    try:
+        # یکبار scan از ابتدا تا انتها
+        id_idx = line.find("'id':")
+        user_idx = line.find("'username':")
+        phone_idx = line.find("'phone':")
+
+        if id_idx == -1 or user_idx == -1 or phone_idx == -1:
+            return None
+
+        # استخراج ID
+        id_start = id_idx + 5
+        id_end = line.find(",", id_start)
+
+        # استخراج username
+        user_start = line.find("'", user_idx + 11) + 1
+        user_end = line.find("'", user_start)
+
+        # استخراج phone
+        phone_start = line.find("'", phone_idx + 9) + 1
+        phone_end = line.find("'", phone_start)
+
+        return {
+            "id": line[id_start:id_end],
+            "username": line[user_start:user_end],
+            "phone": line[phone_start:phone_end],
+        }
+    except:
+        return None
 
 
 # ---------- process chunk ----------

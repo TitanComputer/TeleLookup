@@ -1,12 +1,4 @@
 import streamlit as st
-import pandas as pd
-import os
-import signal
-import time
-import threading
-import tkinter as tk
-from tkinter import filedialog
-import mmap
 from core import *
 
 APP_VERSION = "1.0.0"
@@ -57,7 +49,7 @@ class TeleLookupApp:
         keep_alive_fragment()
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
-        self.icon_path = self.resource_path(os.path.join("assets", "icon.png"))
+        self.icon_path = resource_path(os.path.join("assets", "icon.png"))
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -76,13 +68,6 @@ class TeleLookupApp:
         if "stop_search" not in st.session_state:
             st.session_state["stop_search"] = False
 
-    def resource_path(self, relative_path):
-        """Returns the absolute path to a file in the same directory as the script.
-        This is used to find resources like images when the script is run from a
-        different directory (e.g. as an executable)."""
-        temp_dir = os.path.dirname(__file__)
-        return os.path.join(temp_dir, relative_path)
-
     # ---------- utility ----------
     def update_last_action(self):
         return
@@ -90,36 +75,6 @@ class TeleLookupApp:
 
     def shutdown(self):
         os.kill(os.getpid(), signal.SIGTERM)
-
-    def parse_line_fast(self, line: str):
-        try:
-            # یکبار scan از ابتدا تا انتها
-            id_idx = line.find("'id':")
-            user_idx = line.find("'username':")
-            phone_idx = line.find("'phone':")
-
-            if id_idx == -1 or user_idx == -1 or phone_idx == -1:
-                return None
-
-            # استخراج ID
-            id_start = id_idx + 5
-            id_end = line.find(",", id_start)
-
-            # استخراج username
-            user_start = line.find("'", user_idx + 11) + 1
-            user_end = line.find("'", user_start)
-
-            # استخراج phone
-            phone_start = line.find("'", phone_idx + 9) + 1
-            phone_end = line.find("'", phone_start)
-
-            return {
-                "id": line[id_start:id_end],
-                "username": line[user_start:user_end],
-                "phone": line[phone_start:phone_end],
-            }
-        except:
-            return None
 
     # ---------- search ----------
     def search_file_streaming(self, id_query="", user_query="", phone_query="", results_placeholder=None):
@@ -166,7 +121,7 @@ class TeleLookupApp:
 
         append = results_list.append
         add = seen_ids.add
-        parse_line = self.parse_line_fast
+        parse_line = parse_line_fast
         stopped = False
         with open(file_path, "rb") as fbin:
             with mmap.mmap(fbin.fileno(), 0, access=mmap.ACCESS_READ) as mm:
@@ -211,17 +166,6 @@ class TeleLookupApp:
                     chunk.clear()
 
         t_proc = time.time() - t_proc_start
-
-        # finalize display/state
-        # if stopped:
-        #     percent_text.text("Search stopped by user.")
-        #     found_text.text(f"Found so far: {len(results_list)}")
-        # else:
-        #     # progress_bar.progress(1.0)
-        #     percent_text.text("Progress: 100%")
-        #     found_text.text(f"Found: {len(results_list)}")
-
-        # elapsed_text.text(f"Elapsed time: {time.time()-total_start:.1f} sec")
 
         if results_list:
             t_df = time.time()
