@@ -108,6 +108,7 @@ jobs:
             --no-deployment-flag=self-execution \
             --standalone \
             --onefile \
+            --windows-console-mode=disable \
             --msvc=latest \
             --assume-yes-for-downloads \
             --output-filename=TeleLookup \
