@@ -1,7 +1,7 @@
 import streamlit as st
 from core import *
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 
 # ===== ایجاد shared_state در سطح global/script
 if "shared_state" not in st.session_state:
@@ -167,31 +167,12 @@ class TeleLookupApp:
 
         t_proc = time.time() - t_proc_start
 
-        if results_list:
-            t_df = time.time()
-            df = pd.DataFrame.from_records(results_list)
-            df.index = range(1, len(df) + 1)
-            df_time += time.time() - t_df
-            # ذخیره در session_state (تا بعد از rerun هم بماند)
-            st.session_state["results"] = df
-            st.session_state["no_results_found"] = False
-            results_placeholder.dataframe(df, width="stretch")
-        else:
-            # no results produced by THIS search
-            if stopped:
-                # if there are previous results in session, keep them and just inform user
-                prev = st.session_state.get("results", pd.DataFrame())
-                if not prev.empty:
-                    st.info("Search stopped — no new results found. Showing previous results.")
-                else:
-                    st.session_state["results"] = pd.DataFrame()
-                    st.session_state["no_results_found"] = True
-                    results_placeholder.info("No results found")
-            else:
-                # هیچ نتیجه‌ای پیدا نشده
+        if stopped:
+            # if there are previous results in session, keep them and just inform user
+            prev = st.session_state.get("results", pd.DataFrame())
+            if prev.empty:
                 st.session_state["results"] = pd.DataFrame()
                 st.session_state["no_results_found"] = True
-                results_placeholder.info("No results found")
 
         # timings
         print(f"[DETAIL] I/O read took {io_time:.2f} sec")
