@@ -59,6 +59,8 @@ class TeleLookupApp:
             st.session_state["results"] = pd.DataFrame()
         if "search_clicked" not in st.session_state:
             st.session_state["search_clicked"] = False
+        if "shutdown_clicked" not in st.session_state:
+            st.session_state["shutdown_clicked"] = False
         if "last_action" not in st.session_state:
             st.session_state["last_action"] = time.time()
         if "show_search_ui" not in st.session_state:
@@ -74,6 +76,7 @@ class TeleLookupApp:
         st.session_state["last_action"] = time.time()
 
     def shutdown(self):
+        time.sleep(1)  # allow UI to update
         os.kill(os.getpid(), signal.SIGTERM)
 
     # ---------- search ----------
@@ -279,8 +282,11 @@ class TeleLookupApp:
                             st.rerun()
                 with exitbtn:
                     if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
-                        st.info("Shutting down server...")
-                        self.shutdown()
+                        st.session_state["shutdown_clicked"] = True
+
+                if st.session_state["shutdown_clicked"]:
+                    st.info("Shutting down server...")
+                    self.shutdown()
 
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
@@ -359,8 +365,11 @@ class TeleLookupApp:
 
                 with btn3:
                     if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
-                        st.info("Shutting down server...")
-                        self.shutdown()
+                        st.session_state["shutdown_clicked"] = True
+
+                if st.session_state["shutdown_clicked"]:
+                    st.info("Shutting down server...")
+                    self.shutdown()
 
                 # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
                 if st.session_state["search_clicked"]:
