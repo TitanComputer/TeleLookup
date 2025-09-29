@@ -33,10 +33,11 @@ def find_free_port(start_port=8501, max_tries=50):
 
 def check_and_kill_process(process_name):
     """Check if one or more processes are running and ask user to terminate them all"""
+    current_pid = os.getpid()
     matching_procs = [
         proc
         for proc in psutil.process_iter(attrs=["pid", "name"])
-        if proc.info["name"] and proc.info["name"].lower() == process_name.lower()
+        if proc.info["name"] and proc.info["name"].lower() == process_name.lower() and proc.info["pid"] != current_pid
     ]
 
     if not matching_procs:
