@@ -32,24 +32,27 @@ def find_free_port(start_port=8501, max_tries=50):
 
 
 def check_and_kill_process(process_name):
-    """Check if one or more processes are running and ask user to terminate them all"""
-    current_pid = os.getpid()
+    """Check if older processes with the same name are running and ask user to terminate them"""
+    current = psutil.Process(os.getpid())
+    current_start = current.create_time()
     matching_procs = [
         proc
-        for proc in psutil.process_iter(attrs=["pid", "name"])
-        if proc.info["name"] and proc.info["name"].lower() == process_name.lower() and proc.info["pid"] != current_pid
+        for proc in psutil.process_iter(attrs=["pid", "name", "create_time"])
+        if proc.info["name"]
+        and proc.info["name"].lower() == process_name.lower()
+        and proc.info["pid"] != current.pid
+        and proc.info["create_time"] < current_start
     ]
 
     if not matching_procs:
-        return True  # No process found, safe to continue
+        return True  # No older process found, safe to continue
 
     # Create a temporary Tkinter root (hidden)
     root = Tk()
     root.withdraw()
 
     response = messagebox.askyesno(
-        "Process Running",
-        f"{process_name} is already running.\nDo you want to terminate it?",
+        "Process Running", f"{process_name} is already running.\nDo you want to terminate it and run a new instance?"
     )
 
     root.destroy()
