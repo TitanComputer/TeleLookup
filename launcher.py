@@ -31,46 +31,119 @@ def find_free_port(start_port=8501, max_tries=50):
     raise RuntimeError("No free port found in range")
 
 
-def check_and_kill_process(process_name):
-    """Check if older processes with the same name are running and ask user to terminate them"""
+def _is_related(proc, current):
+    """Return True if proc is ancestor or descendant of current process."""
+    try:
+        # check if proc is an ancestor of current
+        p = current
+        while True:
+            parent = p.parent()
+            if parent is None:
+                break
+            if parent.pid == proc.pid:
+                return True
+            p = parent
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+
+    try:
+        # check if proc is a descendant of current
+        p = proc
+        while True:
+            parent = p.parent()
+            if parent is None:
+                break
+            if parent.pid == current.pid:
+                return True
+            p = parent
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+
+    return False
+
+
+def check_and_kill_process(process_name, debug=False):
+    """
+    Find other running instances of `process_name` that are NOT part of
+    this instance's process tree and that started before this instance.
+    Ask the user to terminate them all. Returns True if safe to continue.
+    """
     current = psutil.Process(os.getpid())
-    current_start = current.create_time()
-    matching_procs = [
-        proc
-        for proc in psutil.process_iter(attrs=["pid", "name", "create_time"])
-        if proc.info["name"]
-        and proc.info["name"].lower() == process_name.lower()
-        and proc.info["pid"] != current.pid
-        and proc.info["create_time"] < current_start
-    ]
+    try:
+        current_start = current.create_time()
+    except Exception:
+        current_start = time.time()
 
-    if not matching_procs:
-        return True  # No older process found, safe to continue
+    candidates = []
+    all_found = []
 
-    # Create a temporary Tkinter root (hidden)
+    for proc in psutil.process_iter(attrs=["pid", "name", "create_time"]):
+        try:
+            info = proc.info
+            name = info.get("name")
+            if not name or name.lower() != process_name.lower():
+                continue
+
+            pid = info.get("pid")
+            create_time = info.get("create_time")
+            all_found.append((pid, name, create_time))
+
+            if pid == current.pid:
+                continue
+
+            # skip processes that are in the same process tree (ancestor/descendant)
+            if _is_related(proc, current):
+                continue
+
+            # ensure proc started before current (use a tiny tolerance to avoid race)
+            if create_time is None:
+                try:
+                    create_time = proc.create_time()
+                except Exception:
+                    create_time = 0
+
+            if create_time >= (current_start - 0.1):
+                # started at same time or after current -> likely part of this instance or not an "older" instance
+                continue
+
+            candidates.append(proc)
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+    if debug:
+        print("All matching-name processes (pid, name, create_time):", all_found)
+        print("Candidates to consider terminating (pid):", [p.pid for p in candidates])
+
+    if not candidates:
+        return True
+
     root = Tk()
     root.withdraw()
-
     response = messagebox.askyesno(
-        "Process Running", f"{process_name} is already running.\nDo you want to terminate it and run a new instance?"
+        "Process Running",
+        f"{process_name} is already running.\nDo you want to terminate it and run a new instance?",
     )
-
     root.destroy()
 
-    if response:
-        errors = []
-        for proc in matching_procs:
-            try:
-                proc.kill()
-            except Exception as e:
-                errors.append(f"PID {proc.pid}: {e}")
-
-        if errors:
-            messagebox.showerror("Error", f"Failed to terminate some processes:\n" + "\n".join(errors))
-            return False
-        return True
-    else:
+    if not response:
         return False
+
+    errors = []
+    for proc in candidates:
+        try:
+            proc.kill()
+        except Exception as e:
+            errors.append(f"PID {proc.pid}: {e}")
+
+    if errors:
+        root = Tk()
+        root.withdraw()
+        messagebox.showerror("Error", "Failed to terminate some processes:\n" + "\n".join(errors))
+        root.destroy()
+        return False
+
+    return True
 
 
 if __name__ == "__main__":
