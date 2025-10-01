@@ -47,8 +47,9 @@ def keep_alive_fragment():
 def user_action_fragment(idle_timeout):
     now = time.time()
     if now - st.session_state.get("user_action", now) > idle_timeout:
-        st.warning("User inactive for too long. Closing app...")
+        st.warning("You have been inactive for too long. Closing app...")
         print("User inactive for too long. Closing app...")
+        time.sleep(1)  # allow UI to update
         os.kill(os.getpid(), signal.SIGTERM)
 
 
