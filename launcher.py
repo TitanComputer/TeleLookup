@@ -16,6 +16,9 @@ def close_splash():
         )
         if os.path.exists(splash_filename):
             try:
+                # Small delay to ensure Streamlit setup
+                print("Closing splash screen...")
+                time.sleep(5)
                 os.unlink(splash_filename)
             except OSError:
                 pass
@@ -147,9 +150,6 @@ def check_and_kill_process(process_name, debug=False):
 
 
 if __name__ == "__main__":
-
-    # Small delay to ensure Streamlit setup
-    time.sleep(5)
 
     # Close splash if running with Nuitka
     close_splash()
