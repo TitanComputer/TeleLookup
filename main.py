@@ -1,9 +1,9 @@
 import streamlit as st
 from core import *
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.4.0"
 
-# ===== ایجاد shared_state در سطح global/script
+# ===== initialize shared state
 if "shared_state" not in st.session_state:
     st.session_state["shared_state"] = {"last_action": time.time()}
 
@@ -37,19 +37,29 @@ def cache_shared_state():
     shared_state = get_shared_state()
 
 
-# ===== fragment برای keep-alive
+# ===== fragments for updating last_action
 @st.fragment(run_every="2s")
 def keep_alive_fragment():
     shared_state["last_action"] = time.time()
 
 
+@st.fragment(run_every="5s")
+def user_action_fragment(idle_timeout):
+    now = time.time()
+    if now - st.session_state.get("user_action", now) > idle_timeout:
+        st.warning("User inactive for too long. Closing app...")
+        print("User inactive for too long. Closing app...")
+        os.kill(os.getpid(), signal.SIGTERM)
+
+
 class TeleLookupApp:
     def __init__(self, idle_timeout=300, chunk_size=1000000):
-        cache_shared_state()
-        keep_alive_fragment()
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
         self.icon_path = resource_path(os.path.join("assets", "icon.png"))
+        cache_shared_state()
+        keep_alive_fragment()
+        user_action_fragment(self.idle_timeout)
 
         if "file_path" not in st.session_state:
             st.session_state["file_path"] = ""
@@ -69,11 +79,12 @@ class TeleLookupApp:
             st.session_state["no_results_found"] = False
         if "stop_search" not in st.session_state:
             st.session_state["stop_search"] = False
+        if "user_action" not in st.session_state:
+            st.session_state["user_action"] = time.time()
 
     # ---------- utility ----------
-    def update_last_action(self):
-        return
-        st.session_state["last_action"] = time.time()
+    def update_user_action(self):
+        st.session_state["user_action"] = time.time()
 
     def shutdown(self):
         time.sleep(1)  # allow UI to update
@@ -196,8 +207,8 @@ class TeleLookupApp:
         st.session_state["final_progress"] = 100
         st.session_state["final_elapsed"] = f"Elapsed time: {time.time()-total_start:.1f} sec"
         st.session_state["final_found"] = f"Found: {len(results_list)}"
+        self.update_user_action()
         st.rerun()
-        self.update_last_action()
 
     def reset(self):
         st.session_state["results"] = pd.DataFrame()
@@ -208,14 +219,6 @@ class TeleLookupApp:
         st.session_state.pop("final_elapsed", None)
         st.session_state.pop("final_found", None)
         st.session_state.pop("total_start", None)
-
-        self.update_last_action()
-
-    # ---------- idle ----------
-    def check_idle_timeout(self):
-        if time.time() - st.session_state.get("last_action", time.time()) > self.idle_timeout:
-            st.warning("Idle timeout reached. Closing app...")
-            self.shutdown()
 
     # ---------- UI ----------
     def browse_file(self):
@@ -228,7 +231,7 @@ class TeleLookupApp:
         root.destroy()
 
         if not file_path:
-            return None  # کاربر Cancel زد
+            return None  # user cancelled
         return file_path
 
     def run(self):
@@ -237,10 +240,9 @@ class TeleLookupApp:
         with header:
             col1, col2 = st.columns([1, 15])
             with col1:
-                st.image(self.icon_path, width=96)  # اندازه آیکون
+                st.image(self.icon_path, width=96)
             with col2:
                 st.title(f"TeleLookup v{APP_VERSION}")
-            # st.title(f"📂 TeleLookup v{APP_VERSION}")
 
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
@@ -253,7 +255,7 @@ class TeleLookupApp:
                 )
 
             with col2:
-                # فاصله برای هم‌تراز شدن با text_input
+                # add some space from top
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                 searchbtn, exitbtn = st.columns([1, 1])
 
@@ -264,13 +266,13 @@ class TeleLookupApp:
 
                         selected_path = self.browse_file()
 
-                        # بررسی اینکه آیا فایل انتخاب شده
+                        # check if file selected
                         if not selected_path:
                             st.error("❌ No file selected.")
-                        # بررسی اینکه فایل وجود داره
+                        # check if file exists
                         elif not os.path.isfile(selected_path):
                             st.error("❌ File does not exist.")
-                        # بررسی اینکه نام فایل درست باشه
+                        # check if file is TeleDB_light.txt
                         elif os.path.basename(selected_path) != "TeleDB_light.txt":
                             st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
                         else:
@@ -278,8 +280,9 @@ class TeleLookupApp:
                             st.session_state["file_path"] = selected_path
                             st.session_state["show_search_ui"] = True
                             st.session_state["file_loaded"] = True
-                            self.update_last_action()
                             st.rerun()
+                        self.update_user_action()
+
                 with exitbtn:
                     if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
                         st.session_state["shutdown_clicked"] = True
@@ -291,11 +294,12 @@ class TeleLookupApp:
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
             st.success("✅ TeleDB_light.txt File loaded successfully!")
+            self.update_user_action()
 
         # --- Search UI ---
         if st.session_state.get("show_search_ui", False):
             st.markdown("---")
-            # 🔹 اول سرچ باکس‌ها
+            # split into two columns
             left_col, right_col = st.columns([3, 1])
 
             with left_col:
@@ -306,6 +310,7 @@ class TeleLookupApp:
                     max_chars=20,
                     disabled=st.session_state["search_clicked"],
                     placeholder="Enter full or partial Telegram unique ID (e.g. 12345678)",
+                    on_change=self.update_user_action,
                 )
                 user_query = st.text_input(
                     "👤 Username",
@@ -314,6 +319,7 @@ class TeleLookupApp:
                     max_chars=40,
                     disabled=st.session_state["search_clicked"],
                     placeholder="Enter full or partial Telegram username (e.g. johndoe)",
+                    on_change=self.update_user_action,
                 )
                 phone_query = st.text_input(
                     "📞 Phone",
@@ -322,29 +328,30 @@ class TeleLookupApp:
                     max_chars=20,
                     disabled=st.session_state["search_clicked"],
                     placeholder="Enter full or partial phone number. Format: 989xxxxxxxxx",
+                    on_change=self.update_user_action,
                 )
 
-            # 🔹 جای نمایش نتایج (قبل از دکمه‌ها بسازیم که همیشه آماده باشه)
+            # --- Results + Buttons ---
             st.markdown("---")
             results_placeholder = st.empty()
 
             if not st.session_state["results"].empty:
                 results_placeholder.dataframe(st.session_state["results"], width="stretch")
             elif st.session_state.get("no_results_found", False):
-                # اگر سرچ تموم شد ولی هیچ نتیجه‌ای نبود
+                # if no results found in previous search, show message
                 results_placeholder.info("No results found")
-            # در غیر این صورت چیزی نمایش داده نمیشه (شروع سرچ جدول خالی خواهد بود)
+            # else: empty at start
 
             with right_col:
-                # فاصله از بالا
+                # add some space from top
                 st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
 
-                # سه ستون برای سه دکمه در یک ردیف
+                # split into three columns
                 btn1, btn2, btn3 = st.columns([1, 1, 1])
 
                 with btn1:
                     if not st.session_state["search_clicked"]:
-                        # حالت عادی → دکمه Search
+                        # search button
                         if st.button("🚀 Search"):
                             results_placeholder.empty()
                             st.session_state.pop("total_start", None)
@@ -352,14 +359,17 @@ class TeleLookupApp:
                             st.session_state["no_results_found"] = False
                             st.session_state["stop_search"] = False
                             st.session_state["search_clicked"] = True
+                            self.update_user_action()
                             st.rerun()
                     else:
-                        # حالت وقتی سرچ در حال اجراست → دکمه Stop
+                        # stop button
                         if st.button("🛑 Stop"):
+                            self.update_user_action()
                             st.session_state["stop_search"] = True
 
                 with btn2:
                     if st.button("🔄 Reset", disabled=st.session_state["search_clicked"]):
+                        self.update_user_action()
                         self.reset()
                         results_placeholder.empty()
 
@@ -371,23 +381,27 @@ class TeleLookupApp:
                     st.info("Shutting down server...")
                     self.shutdown()
 
-                # 🔹 اجرای سرچ در یک سطر پایین‌تر از کل دکمه‌ها
+                # start search
                 if st.session_state["search_clicked"]:
                     self.search_file_streaming(id_query, user_query, phone_query, results_placeholder)
 
                 if st.session_state.get("stop_search", False):
-                    elapsed = time.time() - st.session_state["total_start"]  # زمان سپری‌شده تا لحظه استپ
+                    elapsed = time.time() - st.session_state["total_start"]  # elapsed time
                     st.progress(min(st.session_state.get("final_progress", 0) / 100, 1.0))
                     st.write("Search stopped by user.")
-                    st.write(f"Elapsed: {elapsed:.1f} sec")  # نمایش زمان سپری‌شده
+                    st.write(f"Elapsed: {elapsed:.1f} sec")  # show elapsed time
                     st.write(f"Found so far: {len(st.session_state.get('results', []))}")
                 else:
-                    # اگر جستجو هنوز ادامه داره، اطلاعات جدید رو نشون بده
+                    # if search finished normally, show final stats
                     if "final_results" in st.session_state:
                         st.progress(1.0)
                         st.write("Progress: 100%")
                         st.write(st.session_state["final_elapsed"])
                         st.write(st.session_state["final_found"])
+        st.info(
+            f"ℹ️ Note: If you remain inactive for more than {self.idle_timeout // 60} minutes, "
+            "the app will automatically shut down due to inactivity."
+        )
 
 
 if __name__ == "__main__":
