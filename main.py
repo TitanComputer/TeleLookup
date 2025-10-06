@@ -58,6 +58,8 @@ class TeleLookupApp:
         self.idle_timeout = idle_timeout
         self.chunk_size = chunk_size
         self.icon_path = resource_path(os.path.join("assets", "icon.png"))
+        self.donate_image_path = resource_path(os.path.join("assets", "donate.png"))
+        self.donate_image_base64 = image_to_base64(self.donate_image_path)
         cache_shared_state()
         keep_alive_fragment()
         user_action_fragment(self.idle_timeout)
@@ -82,6 +84,10 @@ class TeleLookupApp:
             st.session_state["stop_search"] = False
         if "user_action" not in st.session_state:
             st.session_state["user_action"] = time.time()
+        if "browse_clicked" not in st.session_state:
+            st.session_state["browse_clicked"] = False
+        if "show_donate" not in st.session_state:
+            st.session_state["show_donate"] = False
 
     # ---------- utility ----------
     def update_user_action(self):
@@ -235,6 +241,24 @@ class TeleLookupApp:
             return None  # user cancelled
         return file_path
 
+    def disable_donate():
+        st.session_state["show_donate"] = False
+
+    @st.dialog("Donate ❤️", dismissible=True, on_dismiss=disable_donate)
+    def donate_dialog(self):
+        st.markdown(
+            f"""
+            <a href="http://www.coffeete.ir/Titan" target="_blank">
+                <img src="data:image/png;base64,{self.donate_image_base64}" style="width:100%;">
+            </a></br></br>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.write("USDT (Tether) – TRC20 Wallet Address :")
+        wallet_address = "TGoKk5zD3BMSGbmzHnD19m9YLpH5ZP8nQe"
+        st.code(wallet_address)
+
     def run(self):
         st.set_page_config(page_title=f"TeleLookup v{APP_VERSION}", layout="wide", page_icon=self.icon_path)
         header = st.container()
@@ -248,7 +272,7 @@ class TeleLookupApp:
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
             st.info("Please select the 'TeleDB_light.txt' file to proceed.")
-            col1, col2 = st.columns([4, 1])
+            col1, col2 = st.columns([6, 2])
 
             with col1:
                 st.text_input(
@@ -258,39 +282,49 @@ class TeleLookupApp:
             with col2:
                 # add some space from top
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-                searchbtn, exitbtn = st.columns([1, 1])
+                searchbtn, donatebtn, exitbtn = st.columns([1, 1, 1])
 
                 with searchbtn:
                     if st.button(
                         "📁 Browse File", disabled=st.session_state.get("show_search_ui", False), key="browse_btn"
                     ):
+                        st.session_state["browse_clicked"] = True
 
-                        selected_path = self.browse_file()
-
-                        # check if file selected
-                        if not selected_path:
-                            st.error("❌ No file selected.")
-                        # check if file exists
-                        elif not os.path.isfile(selected_path):
-                            st.error("❌ File does not exist.")
-                        # check if file is TeleDB_light.txt
-                        elif os.path.basename(selected_path) != "TeleDB_light.txt":
-                            st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
-                        else:
-                            # valid file: set session state and rerun to update UI
-                            st.session_state["file_path"] = selected_path
-                            st.session_state["show_search_ui"] = True
-                            st.session_state["file_loaded"] = True
-                            st.rerun()
-                        self.update_user_action()
+                with donatebtn:
+                    if st.button("❤️ Donate"):
+                        st.session_state["show_donate"] = True
 
                 with exitbtn:
                     if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
                         st.session_state["shutdown_clicked"] = True
 
+                if st.session_state["browse_clicked"]:
+                    selected_path = self.browse_file()
+                    # check if file selected
+                    if not selected_path:
+                        st.error("❌ No file selected.")
+                    # check if file exists
+                    elif not os.path.isfile(selected_path):
+                        st.error("❌ File does not exist.")
+                    # check if file is TeleDB_light.txt
+                    elif os.path.basename(selected_path) != "TeleDB_light.txt":
+                        st.error("❌ Invalid file selected. Please select 'TeleDB_light.txt'.")
+                    else:
+                        # valid file: set session state and rerun to update UI
+                        st.session_state["file_path"] = selected_path
+                        st.session_state["show_search_ui"] = True
+                        st.session_state["file_loaded"] = True
+                        st.rerun()
+                    st.session_state["browse_clicked"] = False
+                    self.update_user_action()
+
                 if st.session_state["shutdown_clicked"]:
                     st.info("Shutting down server...")
                     self.shutdown()
+
+                if st.session_state.get("show_donate", False):
+                    self.donate_dialog()
+                    self.update_user_action()
 
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
