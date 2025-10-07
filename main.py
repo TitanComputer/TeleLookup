@@ -1,7 +1,7 @@
 import streamlit as st
 from core import *
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.5.0"
 
 # ===== initialize shared state
 if "shared_state" not in st.session_state:
@@ -273,7 +273,7 @@ class TeleLookupApp:
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
             st.info("Please select the 'TeleDB_light.txt' file to proceed.")
-            col1, col2 = st.columns([6, 2])
+            col1, col2 = st.columns([5, 2])
 
             with col1:
                 st.text_input(
@@ -283,7 +283,7 @@ class TeleLookupApp:
             with col2:
                 # add some space from top
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-                searchbtn, donatebtn, exitbtn = st.columns([1, 1, 1])
+                spacer1, searchbtn, spacer2, donatebtn, spacer3, exitbtn = st.columns([0.1, 1, 0.2, 1, 0.2, 1])
 
                 with searchbtn:
                     if st.button(
@@ -292,7 +292,7 @@ class TeleLookupApp:
                         st.session_state["browse_clicked"] = True
 
                 with donatebtn:
-                    if st.button("❤️ Donate"):
+                    if st.button("❤️ Donate", disabled=st.session_state.get("show_search_ui", False), key="donate_btn"):
                         st.session_state["show_donate"] = True
 
                 with exitbtn:
@@ -336,7 +336,7 @@ class TeleLookupApp:
         if st.session_state.get("show_search_ui", False):
             st.markdown("---")
             # split into two columns
-            left_col, right_col = st.columns([3, 1])
+            left_col, right_col = st.columns([7, 3])
 
             with left_col:
                 id_query = st.text_input(
@@ -383,12 +383,14 @@ class TeleLookupApp:
                 st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
 
                 # split into three columns
-                btn1, btn2, btn3 = st.columns([1, 1, 1])
+                searchbtn, spacer4, resetbtn, spacer5, donatebtn, spacer6, exitbtn = st.columns(
+                    [1, 0.1, 1, 0.3, 1, 0.1, 1]
+                )
 
-                with btn1:
+                with searchbtn:
                     if not st.session_state["search_clicked"]:
                         # search button
-                        if st.button("🚀 Search"):
+                        if st.button("🚀 Search", key="search"):
                             results_placeholder.empty()
                             st.session_state.pop("total_start", None)
                             st.session_state["results"] = pd.DataFrame()
@@ -399,23 +401,31 @@ class TeleLookupApp:
                             st.rerun()
                     else:
                         # stop button
-                        if st.button("🛑 Stop"):
+                        if st.button("🛑 Stop", key="stop"):
                             self.update_user_action()
                             st.session_state["stop_search"] = True
 
-                with btn2:
-                    if st.button("🔄 Reset", disabled=st.session_state["search_clicked"]):
+                with resetbtn:
+                    if st.button("🔄 Reset", disabled=st.session_state["search_clicked"], key="reset"):
                         self.update_user_action()
                         self.reset()
                         results_placeholder.empty()
 
-                with btn3:
-                    if st.button("❌ Exit", disabled=st.session_state["search_clicked"]):
+                with donatebtn:
+                    if st.button("❤️ Donate", disabled=st.session_state["search_clicked"], key="donate"):
+                        st.session_state["show_donate"] = True
+
+                with exitbtn:
+                    if st.button("❌ Exit", disabled=st.session_state["search_clicked"], key="exit"):
                         st.session_state["shutdown_clicked"] = True
 
                 if st.session_state["shutdown_clicked"]:
                     st.info("Shutting down server...")
                     self.shutdown()
+
+                if st.session_state.get("show_donate", False):
+                    self.update_user_action()
+                    donate_dialog()
 
                 # start search
                 if st.session_state["search_clicked"]:
