@@ -241,24 +241,6 @@ class TeleLookupApp:
             return None  # user cancelled
         return file_path
 
-    def disable_donate():
-        st.session_state["show_donate"] = False
-
-    @st.dialog("Donate ❤️", dismissible=True, on_dismiss=disable_donate)
-    def donate_dialog(self):
-        st.markdown(
-            f"""
-            <a href="http://www.coffeete.ir/Titan" target="_blank">
-                <img src="data:image/png;base64,{self.donate_image_base64}" style="width:100%;">
-            </a></br></br>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.write("USDT (Tether) – TRC20 Wallet Address :")
-        wallet_address = "TGoKk5zD3BMSGbmzHnD19m9YLpH5ZP8nQe"
-        st.code(wallet_address)
-
     def run(self):
         st.set_page_config(page_title=f"TeleLookup v{APP_VERSION}", layout="wide", page_icon=self.icon_path)
         header = st.container()
@@ -268,6 +250,25 @@ class TeleLookupApp:
                 st.image(self.icon_path, width=96)
             with col2:
                 st.title(f"TeleLookup v{APP_VERSION}")
+
+        def disable_donate():
+            st.session_state["show_donate"] = False
+            self.update_user_action()
+
+        @st.dialog("Donate ❤️", dismissible=True, on_dismiss=disable_donate)
+        def donate_dialog():
+            st.markdown(
+                f"""
+                <a href="http://www.coffeete.ir/Titan" target="_blank">
+                    <img src="data:image/png;base64,{self.donate_image_base64}" style="width:100%;">
+                </a></br></br>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.write("USDT (Tether) – TRC20 Wallet Address :")
+            wallet_address = "TGoKk5zD3BMSGbmzHnD19m9YLpH5ZP8nQe"
+            st.code(wallet_address)
 
         # --- File selection ---
         if not st.session_state.get("file_loaded", False):
@@ -323,8 +324,8 @@ class TeleLookupApp:
                     self.shutdown()
 
                 if st.session_state.get("show_donate", False):
-                    self.donate_dialog()
                     self.update_user_action()
+                    donate_dialog()
 
         # after rerun, show success message in this same column
         if st.session_state.get("file_loaded", False):
