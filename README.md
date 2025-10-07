@@ -3,7 +3,7 @@
 > ⚠️ **Note**  
 > This application requires the original **TeleDB_light.txt** database (≈2.51 GB, 42,823,958 lines).  
 > A small sample file is provided in this repository for testing purposes.  
-> Please do **not** ask me to provide the original database file.  
+> Please do **NOT** ask me to provide the original database file.  
 >
 > 🚨 **Disclaimer**  
 > This project is created **for research and programming practice purposes only**.  
@@ -33,11 +33,11 @@ You can:
 
 - 🚀 **Fast Telegram Database Search** – Quickly search IDs, usernames, or phone numbers in large TeleDB_light files.  
 - 🧠 **Streaming Results** – Displays matches as they are found without waiting for the entire search to finish.  
-- 🛑 **Stop Option** – Allows you to stop an ongoing search safely.  
+- 🛑 **Stop Functionality** – Allows you to stop an ongoing search safely.  
 - 🔄 **Reset Functionality** – Clear search results and inputs to start fresh.  
 - 🕒 **Idle Timeout Protection** – Automatically shuts down the app after inactivity to save resources.  
 - 🎉 **User-Friendly GUI** – Simple, step-by-step interface for easy navigation and operation.  
-- 📥 Downloadable `.exe` version (Windows only)
+- 📥 **Compiled Exe** - Downloadable `.exe` version (Windows only)
 
 
 ## 🖼️ Screenshots
@@ -56,7 +56,7 @@ If you're using the Python script:
 ```bash
 streamlit run main.py
 ```
-Or, run the TeleLookup.exe file directly if you downloaded the compiled version.
+Or, run the **TeleLookup.exe** file directly if you downloaded the compiled version.
 
 ### 🖥️ How to Use the GUI
 
