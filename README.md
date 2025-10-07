@@ -50,18 +50,10 @@ You can:
 You can download the latest compiled `.exe` version from the [Releases](https://github.com/TitanComputer/TeleLookup/releases/latest) section.  
 No need to install Python — just download and run.
 
-## ⚙️ Usage
-
-If you're using the Python script:
-```bash
-streamlit run main.py
-```
-Or, run the **TeleLookup.exe** file directly if you downloaded the compiled version.
-
 ### 🖥️ How to Use the GUI
 
 1. **Launch the App**  
-   - If running via executable, double-click `TeleLookup.exe`.  
+   - If running via executable, double-click **`TeleLookup.exe`**.  
    - If running via Streamlit, open a terminal and run:  
      ```bash
      streamlit run app.py
