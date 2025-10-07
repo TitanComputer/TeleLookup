@@ -1,0 +1,16 @@
+{'channel' : @MOH21EN", 'sudo' : @MOH21EN"}
+{'id': 816733568, 'username': '', 'phone': '989157259868'}
+{'id': 322226643, 'username': 'mbnab', 'phone': '989389630094'}
+{'id': 61146270, 'username': '', 'phone': '989305287097'}
+{'id': 155556750, 'username': '', 'phone': '989117536790'}
+{'id': 898527953, 'username': 'alirezaaa', 'phone': '989334527107'}
+{'id': 702353125, 'username': 'Amin_ap_turk', 'phone': '989917191942'}
+{'id': 137889759, 'username': 'AsdHosein', 'phone': '989128152318'}
+{'id': 535871113, 'username': '', 'phone': '989334152884'}
+{'id': 68258179, 'username': 'Allfol', 'phone': '989142899589'}
+{'id': 259614624, 'username': '', 'phone': '989125523633'}
+{'id': 875294917, 'username': '', 'phone': '989219354803'}
+{'id': 169315249, 'username': 'Mohammadj88', 'phone': '989174256727'}
+{'id': 41245956, 'username': 'mohammaddd', 'phone': '989124523677'}
+{'id': 685247280, 'username': 'sinakkk', 'phone': '989911258318'}
+{'id': 464785790, 'username': '', 'phone': '989142485365'}
