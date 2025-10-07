@@ -3,7 +3,7 @@
 > ⚠️ **Note**  
 > This application requires the original **TeleDB_light.txt** database (≈2.51 GB, 42,823,958 lines).  
 > A small sample file (with fake data) is provided in this repository for testing purposes.  
-> [Download sample TeleDB_light.txt](https://raw.githubusercontent.com/TitanComputer/TeleLookup/main/sample/TeleDB_light.txt)    
+> [Download sample TeleDB_light.txt](https://raw.githubusercontent.com/TitanComputer/TeleLookup/main/sample/TeleDB_light.txt)  
 > Please do **NOT** ask me to provide the original database file.  
 >
 > 🚨 **Disclaimer**  
