@@ -42,7 +42,7 @@ You can:
 
 ## 🖼️ Screenshots
 
-
+<img width="1350" height="411" alt="Untitled4" src="https://github.com/user-attachments/assets/3d8f975c-6dad-4743-a9d8-87b669ede6c3" />
 
 
 ## 📥 Download
