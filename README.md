@@ -44,7 +44,7 @@ You can:
 
 ## 🖼️ Screenshots
 
-<img width="1350" height="411" alt="Untitled4" src="https://github.com/user-attachments/assets/3d8f975c-6dad-4743-a9d8-87b669ede6c3" />
+<img width="1350" height="1078" alt="Untitled4" src="https://github.com/user-attachments/assets/2b8bfb1e-c1c1-46af-a579-9a4a71113c5e" />
 
 
 ## 📥 Download
