@@ -1,7 +1,7 @@
 import streamlit as st
 from core import *
 
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
 
 # ===== initialize shared state
 if "shared_state" not in st.session_state:
@@ -188,12 +188,12 @@ class TeleLookupApp:
 
         t_proc = time.time() - t_proc_start
 
-        if stopped:
-            # if there are previous results in session, keep them and just inform user
-            prev = st.session_state.get("results", pd.DataFrame())
-            if prev.empty:
-                st.session_state["results"] = pd.DataFrame()
-                st.session_state["no_results_found"] = True
+        # if stopped:
+        # if there are previous results in session, keep them and just inform user
+        prev = st.session_state.get("results", pd.DataFrame())
+        if prev.empty:
+            st.session_state["results"] = pd.DataFrame()
+            st.session_state["no_results_found"] = True
 
         # timings
         print(f"[DETAIL] I/O read took {io_time:.2f} sec")
